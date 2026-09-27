@@ -1,0 +1,906 @@
+Compiled from "StagedVertexBuffer.java"
+public class net.minecraft.client.renderer.StagedVertexBuffer implements java.lang.AutoCloseable {
+  private final com.mojang.blaze3d.vertex.ByteBufferBuilder stagingBuffer;
+
+  private final net.minecraft.client.renderer.StagedVertexBuffer$GpuBufferPool stagingGpuBufferPool;
+
+  private final java.util.List<net.minecraft.client.renderer.StagedVertexBuffer$Draw> draws;
+
+  private net.minecraft.client.renderer.StagedVertexBuffer$Draw lastBuildingDraw;
+
+  private com.mojang.blaze3d.vertex.BufferBuilder lastVertexBuilder;
+
+  private final net.minecraft.client.renderer.StagedVertexBuffer$GpuBufferPool vertexBufferPool;
+
+  private final net.minecraft.client.renderer.StagedVertexBuffer$GpuBufferPool indexBufferPool;
+
+  private com.mojang.renderpearl.api.buffers.GpuBuffer currentVertexBuffer;
+
+  private com.mojang.renderpearl.api.buffers.GpuBuffer currentIndexBuffer;
+
+  public net.minecraft.client.renderer.StagedVertexBuffer(java.util.function.Supplier<java.lang.String>, int);
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #7                  // class java/util/ArrayList
+       8: dup
+       9: invokespecial #9                  // Method java/util/ArrayList."<init>":()V
+      12: putfield      #10                 // Field draws:Ljava/util/List;
+      15: aload_0
+      16: new           #16                 // class com/mojang/blaze3d/vertex/ByteBufferBuilder
+      19: dup
+      20: iload_2
+      21: invokespecial #18                 // Method com/mojang/blaze3d/vertex/ByteBufferBuilder."<init>":(I)V
+      24: putfield      #21                 // Field stagingBuffer:Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;
+      27: aload_0
+      28: new           #25                 // class net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool
+      31: dup
+      32: aload_1
+      33: invokedynamic #27,  0             // InvokeDynamic #0:get:(Ljava/util/function/Supplier;)Ljava/util/function/Supplier;
+      38: bipush        22
+      40: invokespecial #33                 // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool."<init>":(Ljava/util/function/Supplier;I)V
+      43: putfield      #36                 // Field stagingGpuBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      46: aload_0
+      47: new           #25                 // class net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool
+      50: dup
+      51: aload_1
+      52: invokedynamic #40,  0             // InvokeDynamic #1:get:(Ljava/util/function/Supplier;)Ljava/util/function/Supplier;
+      57: bipush        40
+      59: invokespecial #33                 // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool."<init>":(Ljava/util/function/Supplier;I)V
+      62: putfield      #41                 // Field vertexBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      65: aload_0
+      66: new           #25                 // class net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool
+      69: dup
+      70: aload_1
+      71: invokedynamic #44,  0             // InvokeDynamic #2:get:(Ljava/util/function/Supplier;)Ljava/util/function/Supplier;
+      76: bipush        72
+      78: invokespecial #33                 // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool."<init>":(Ljava/util/function/Supplier;I)V
+      81: putfield      #45                 // Field indexBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      84: return
+    LineNumberTable:
+      line 40: 0
+      line 31: 4
+      line 41: 15
+      line 43: 27
+      line 44: 46
+      line 45: 65
+      line 46: 84
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      85     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+          0      85     1 label   Ljava/util/function/Supplier;
+          0      85     2 initialCapacity   I
+
+  public net.minecraft.client.renderer.StagedVertexBuffer$Draw appendDraw(com.mojang.renderpearl.api.vertex.VertexFormat, com.mojang.renderpearl.api.pipeline.PrimitiveTopology);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: aconst_null
+       4: invokevirtual #48                 // Method appendDraw:(Lcom/mojang/renderpearl/api/vertex/VertexFormat;Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;Lcom/mojang/blaze3d/vertex/VertexSorting;)Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+       7: areturn
+    LineNumberTable:
+      line 49: 0
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0       8     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+          0       8     1 format   Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+          0       8     2 primitiveTopology   Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;
+
+  public net.minecraft.client.renderer.StagedVertexBuffer$Draw appendDraw(com.mojang.renderpearl.api.vertex.VertexFormat, com.mojang.renderpearl.api.pipeline.PrimitiveTopology, com.mojang.blaze3d.vertex.VertexSorting);
+    Code:
+       0: aload_0
+       1: getfield      #52                 // Field currentVertexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+       4: ifnull        17
+       7: new           #56                 // class java/lang/IllegalStateException
+      10: dup
+      11: ldc           #58                 // String Cannot append draw after upload
+      13: invokespecial #60                 // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      16: athrow
+      17: aload_3
+      18: ifnull        45
+      21: aload_2
+      22: getstatic     #63                 // Field com/mojang/renderpearl/api/pipeline/PrimitiveTopology.QUADS:Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;
+      25: if_acmpeq     45
+      28: new           #69                 // class java/lang/IllegalArgumentException
+      31: dup
+      32: aload_2
+      33: invokestatic  #71                 // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      36: invokedynamic #77,  0             // InvokeDynamic #3:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      41: invokespecial #81                 // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+      44: athrow
+      45: new           #82                 // class net/minecraft/client/renderer/StagedVertexBuffer$Draw
+      48: dup
+      49: aload_1
+      50: aload_2
+      51: aload_3
+      52: invokespecial #84                 // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw."<init>":(Lcom/mojang/renderpearl/api/vertex/VertexFormat;Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;Lcom/mojang/blaze3d/vertex/VertexSorting;)V
+      55: astore        4
+      57: aload_0
+      58: getfield      #10                 // Field draws:Ljava/util/List;
+      61: aload         4
+      63: invokeinterface #87,  2           // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+      68: pop
+      69: aload         4
+      71: areturn
+    LineNumberTable:
+      line 53: 0
+      line 54: 7
+      line 56: 17
+      line 57: 28
+      line 59: 45
+      line 60: 57
+      line 61: 69
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      72     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+          0      72     1 format   Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+          0      72     2 primitiveTopology   Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;
+          0      72     3 quadSorting   Lcom/mojang/blaze3d/vertex/VertexSorting;
+         57      15     4  draw   Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+
+  public com.mojang.blaze3d.vertex.VertexConsumer getVertexBuilder(net.minecraft.client.renderer.StagedVertexBuffer$Draw);
+    Code:
+       0: aload_0
+       1: getfield      #52                 // Field currentVertexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+       4: ifnull        17
+       7: new           #56                 // class java/lang/IllegalStateException
+      10: dup
+      11: ldc           #58                 // String Cannot append draw after upload
+      13: invokespecial #60                 // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      16: athrow
+      17: aload_0
+      18: getfield      #93                 // Field lastBuildingDraw:Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+      21: aload_1
+      22: if_acmpne     36
+      25: aload_0
+      26: getfield      #97                 // Field lastVertexBuilder:Lcom/mojang/blaze3d/vertex/BufferBuilder;
+      29: invokestatic  #101                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+      32: checkcast     #107                // class com/mojang/blaze3d/vertex/VertexConsumer
+      35: areturn
+      36: aload_0
+      37: invokevirtual #109                // Method finishLastVertexBuilder:()V
+      40: aload_0
+      41: aload_1
+      42: putfield      #93                 // Field lastBuildingDraw:Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+      45: aload_0
+      46: new           #112                // class com/mojang/blaze3d/vertex/BufferBuilder
+      49: dup
+      50: aload_0
+      51: getfield      #21                 // Field stagingBuffer:Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;
+      54: aload_1
+      55: getfield      #114                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.primitiveTopology:Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;
+      58: aload_1
+      59: getfield      #117                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.format:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+      62: invokespecial #121                // Method com/mojang/blaze3d/vertex/BufferBuilder."<init>":(Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;Lcom/mojang/renderpearl/api/vertex/VertexFormat;)V
+      65: putfield      #97                 // Field lastVertexBuilder:Lcom/mojang/blaze3d/vertex/BufferBuilder;
+      68: aload_0
+      69: getfield      #97                 // Field lastVertexBuilder:Lcom/mojang/blaze3d/vertex/BufferBuilder;
+      72: areturn
+    LineNumberTable:
+      line 65: 0
+      line 66: 7
+      line 68: 17
+      line 69: 25
+      line 71: 36
+      line 72: 40
+      line 73: 45
+      line 74: 68
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      73     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+          0      73     1  draw   Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+
+  private void finishLastVertexBuilder();
+    Code:
+       0: aload_0
+       1: getfield      #97                 // Field lastVertexBuilder:Lcom/mojang/blaze3d/vertex/BufferBuilder;
+       4: ifnonnull     8
+       7: return
+       8: aload_0
+       9: getfield      #97                 // Field lastVertexBuilder:Lcom/mojang/blaze3d/vertex/BufferBuilder;
+      12: invokevirtual #124                // Method com/mojang/blaze3d/vertex/BufferBuilder.build:()Lcom/mojang/blaze3d/vertex/MeshData;
+      15: astore_1
+      16: aload_1
+      17: ifnull        34
+      20: aload_0
+      21: getfield      #93                 // Field lastBuildingDraw:Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+      24: invokestatic  #101                // Method java/util/Objects.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+      27: checkcast     #82                 // class net/minecraft/client/renderer/StagedVertexBuffer$Draw
+      30: aload_1
+      31: invokevirtual #128                // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw.append:(Lcom/mojang/blaze3d/vertex/MeshData;)V
+      34: aload_0
+      35: aconst_null
+      36: putfield      #97                 // Field lastVertexBuilder:Lcom/mojang/blaze3d/vertex/BufferBuilder;
+      39: aload_0
+      40: aconst_null
+      41: putfield      #93                 // Field lastBuildingDraw:Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+      44: return
+    LineNumberTable:
+      line 78: 0
+      line 79: 7
+      line 81: 8
+      line 82: 16
+      line 83: 20
+      line 85: 34
+      line 86: 39
+      line 87: 44
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      45     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+         16      29     1  mesh   Lcom/mojang/blaze3d/vertex/MeshData;
+
+  public void upload();
+    Code:
+       0: aload_0
+       1: getfield      #52                 // Field currentVertexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+       4: ifnull        17
+       7: new           #56                 // class java/lang/IllegalStateException
+      10: dup
+      11: ldc           #132                // String Already uploaded
+      13: invokespecial #60                 // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      16: athrow
+      17: aload_0
+      18: getfield      #10                 // Field draws:Ljava/util/List;
+      21: invokeinterface #134,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+      26: ifeq          30
+      29: return
+      30: aload_0
+      31: invokevirtual #109                // Method finishLastVertexBuilder:()V
+      34: iconst_0
+      35: istore_1
+      36: iconst_0
+      37: istore_2
+      38: aload_0
+      39: getfield      #10                 // Field draws:Ljava/util/List;
+      42: invokeinterface #138,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      47: astore_3
+      48: aload_3
+      49: invokeinterface #142,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      54: ifeq          182
+      57: aload_3
+      58: invokeinterface #147,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      63: checkcast     #82                 // class net/minecraft/client/renderer/StagedVertexBuffer$Draw
+      66: astore        4
+      68: aload         4
+      70: invokevirtual #151                // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw.isEmpty:()Z
+      73: ifeq          79
+      76: goto          48
+      79: aload         4
+      81: iload_1
+      82: aload         4
+      84: getfield      #117                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.format:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+      87: invokevirtual #152                // Method com/mojang/renderpearl/api/vertex/VertexFormat.getVertexSize:()I
+      90: invokestatic  #158                // Method net/minecraft/util/Mth.roundToward:(II)I
+      93: putfield      #164                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.vertexOffset:I
+      96: aload         4
+      98: getfield      #164                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.vertexOffset:I
+     101: aload         4
+     103: getfield      #168                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.vertexBufferSize:I
+     106: iadd
+     107: istore_1
+     108: aload         4
+     110: getfield      #171                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.quadSorting:Lcom/mojang/blaze3d/vertex/VertexSorting;
+     113: ifnull        158
+     116: aload         4
+     118: invokevirtual #175                // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexType:()Lcom/mojang/renderpearl/api/pipeline/IndexType;
+     121: astore        5
+     123: aload         4
+     125: iload_2
+     126: aload         5
+     128: getfield      #179                // Field com/mojang/renderpearl/api/pipeline/IndexType.bytes:I
+     131: invokestatic  #158                // Method net/minecraft/util/Mth.roundToward:(II)I
+     134: putfield      #184                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexOffset:I
+     137: aload         4
+     139: getfield      #184                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexOffset:I
+     142: aload         4
+     144: getfield      #187                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexCount:I
+     147: aload         5
+     149: getfield      #179                // Field com/mojang/renderpearl/api/pipeline/IndexType.bytes:I
+     152: imul
+     153: iadd
+     154: istore_2
+     155: goto          179
+     158: aload         4
+     160: getfield      #114                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.primitiveTopology:Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;
+     163: invokestatic  #190                // Method com/mojang/blaze3d/systems/RenderSystem.getSequentialBuffer:(Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;)Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;
+     166: astore        5
+     168: aload         5
+     170: aload         4
+     172: getfield      #187                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexCount:I
+     175: invokevirtual #196                // Method com/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer.getBuffer:(I)Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+     178: pop
+     179: goto          48
+     182: iload_1
+     183: istore_3
+     184: iload_2
+     185: istore        4
+     187: iload_3
+     188: ifne          192
+     191: return
+     192: invokestatic  #202                // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/renderpearl/api/device/GpuDevice;
+     195: astore        5
+     197: aload_0
+     198: aload_0
+     199: getfield      #41                 // Field vertexBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+     202: aload         5
+     204: iload_3
+     205: invokevirtual #206                // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool.acquire:(Lcom/mojang/renderpearl/api/device/GpuDevice;I)Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+     208: putfield      #52                 // Field currentVertexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+     211: aload_0
+     212: iload         4
+     214: ifle          231
+     217: aload_0
+     218: getfield      #45                 // Field indexBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+     221: aload         5
+     223: iload         4
+     225: invokevirtual #206                // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool.acquire:(Lcom/mojang/renderpearl/api/device/GpuDevice;I)Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+     228: goto          232
+     231: aconst_null
+     232: putfield      #210                // Field currentIndexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+     235: aload_0
+     236: aload         5
+     238: aload_0
+     239: getfield      #10                 // Field draws:Ljava/util/List;
+     242: aload_0
+     243: getfield      #52                 // Field currentVertexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+     246: aload_0
+     247: getfield      #210                // Field currentIndexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+     250: iload_3
+     251: iload         4
+     253: invokevirtual #213                // Method uploadDrawsToBuffers:(Lcom/mojang/renderpearl/api/device/GpuDevice;Ljava/util/List;Lcom/mojang/renderpearl/api/buffers/GpuBuffer;Lcom/mojang/renderpearl/api/buffers/GpuBuffer;II)V
+     256: return
+    LineNumberTable:
+      line 90: 0
+      line 91: 7
+      line 92: 17
+      line 93: 29
+      line 96: 30
+      line 98: 34
+      line 99: 36
+      line 101: 38
+      line 102: 68
+      line 103: 76
+      line 107: 79
+      line 108: 96
+      line 110: 108
+      line 111: 116
+      line 113: 123
+      line 114: 137
+      line 115: 155
+      line 117: 158
+      line 118: 168
+      line 120: 179
+      line 122: 182
+      line 123: 184
+      line 124: 187
+      line 125: 191
+      line 128: 192
+      line 129: 197
+      line 130: 211
+      line 132: 235
+      line 140: 256
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+        123      32     5 indexType   Lcom/mojang/renderpearl/api/pipeline/IndexType;
+        168      11     5 autoIndices   Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;
+         68     111     4  draw   Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+          0     257     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+         36     221     1 nextVertexOffset   I
+         38     219     2 nextIndexOffset   I
+        184      73     3 vertexBufferSize   I
+        187      70     4 indexBufferSize   I
+        197      60     5 device   Lcom/mojang/renderpearl/api/device/GpuDevice;
+
+  private void uploadDrawsToBuffers(com.mojang.renderpearl.api.device.GpuDevice, java.util.List<net.minecraft.client.renderer.StagedVertexBuffer$Draw>, com.mojang.renderpearl.api.buffers.GpuBuffer, com.mojang.renderpearl.api.buffers.GpuBuffer, int, int);
+    Code:
+       0: aload_1
+       1: invokeinterface #217,  1          // InterfaceMethod com/mojang/renderpearl/api/device/GpuDevice.createCommandEncoder:()Lcom/mojang/renderpearl/api/commands/CommandEncoder;
+       6: astore        7
+       8: iload         5
+      10: iload         6
+      12: iadd
+      13: istore        8
+      15: aload_0
+      16: getfield      #36                 // Field stagingGpuBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      19: aload_1
+      20: iload         8
+      22: invokevirtual #206                // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool.acquire:(Lcom/mojang/renderpearl/api/device/GpuDevice;I)Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+      25: astore        9
+      27: aload         9
+      29: lconst_0
+      30: iload         8
+      32: i2l
+      33: invokeinterface #223,  5          // InterfaceMethod com/mojang/renderpearl/api/buffers/GpuBuffer.slice:(JJ)Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;
+      38: iconst_0
+      39: iconst_1
+      40: invokevirtual #227                // Method com/mojang/renderpearl/api/buffers/GpuBufferSlice.map:(ZZ)Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice$MappedView;
+      43: astore        10
+      45: aload         10
+      47: invokevirtual #233                // Method com/mojang/renderpearl/api/buffers/GpuBufferSlice$MappedView.data:()Ljava/nio/ByteBuffer;
+      50: astore        11
+      52: aload_2
+      53: invokeinterface #138,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      58: astore        12
+      60: aload         12
+      62: invokeinterface #142,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      67: ifeq          155
+      70: aload         12
+      72: invokeinterface #147,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      77: checkcast     #82                 // class net/minecraft/client/renderer/StagedVertexBuffer$Draw
+      80: astore        13
+      82: aload         13
+      84: invokevirtual #151                // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw.isEmpty:()Z
+      87: ifeq          93
+      90: goto          60
+      93: aload         11
+      95: aload         13
+      97: getfield      #164                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.vertexOffset:I
+     100: invokevirtual #239                // Method java/nio/ByteBuffer.position:(I)Ljava/nio/ByteBuffer;
+     103: pop
+     104: aload         13
+     106: getfield      #245                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.vertexBufferSlices:Ljava/util/List;
+     109: invokeinterface #138,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     114: astore        14
+     116: aload         14
+     118: invokeinterface #142,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     123: ifeq          152
+     126: aload         14
+     128: invokeinterface #147,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     133: checkcast     #248                // class com/mojang/blaze3d/vertex/ByteBufferBuilder$Result
+     136: astore        15
+     138: aload         11
+     140: aload         15
+     142: invokevirtual #250                // Method com/mojang/blaze3d/vertex/ByteBufferBuilder$Result.byteBuffer:()Ljava/nio/ByteBuffer;
+     145: invokevirtual #253                // Method java/nio/ByteBuffer.put:(Ljava/nio/ByteBuffer;)Ljava/nio/ByteBuffer;
+     148: pop
+     149: goto          116
+     152: goto          60
+     155: aload_2
+     156: invokeinterface #138,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     161: astore        12
+     163: aload         12
+     165: invokeinterface #142,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     170: ifeq          262
+     173: aload         12
+     175: invokeinterface #147,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     180: checkcast     #82                 // class net/minecraft/client/renderer/StagedVertexBuffer$Draw
+     183: astore        13
+     185: aload         13
+     187: invokevirtual #151                // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw.isEmpty:()Z
+     190: ifeq          196
+     193: goto          163
+     196: aload         4
+     198: ifnull        254
+     201: aload         13
+     203: getfield      #171                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.quadSorting:Lcom/mojang/blaze3d/vertex/VertexSorting;
+     206: ifnull        254
+     209: new           #257                // class com/mojang/blaze3d/vertex/MeshData$SortState
+     212: dup
+     213: aload         13
+     215: invokestatic  #259                // Method decodeSortingPoints:(Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;)Lcom/mojang/blaze3d/vertex/CompactVectorArray;
+     218: aload         13
+     220: invokevirtual #175                // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexType:()Lcom/mojang/renderpearl/api/pipeline/IndexType;
+     223: invokespecial #263                // Method com/mojang/blaze3d/vertex/MeshData$SortState."<init>":(Lcom/mojang/blaze3d/vertex/CompactVectorArray;Lcom/mojang/renderpearl/api/pipeline/IndexType;)V
+     226: astore        14
+     228: aload         11
+     230: iload         5
+     232: aload         13
+     234: getfield      #184                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexOffset:I
+     237: iadd
+     238: invokevirtual #239                // Method java/nio/ByteBuffer.position:(I)Ljava/nio/ByteBuffer;
+     241: pop
+     242: aload         14
+     244: aload         11
+     246: aload         13
+     248: getfield      #171                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.quadSorting:Lcom/mojang/blaze3d/vertex/VertexSorting;
+     251: invokevirtual #266                // Method com/mojang/blaze3d/vertex/MeshData$SortState.writeSortedIndexBuffer:(Ljava/nio/ByteBuffer;Lcom/mojang/blaze3d/vertex/VertexSorting;)V
+     254: aload         13
+     256: invokevirtual #270                // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw.freeVertexData:()V
+     259: goto          163
+     262: aload         10
+     264: ifnull        302
+     267: aload         10
+     269: invokevirtual #273                // Method com/mojang/renderpearl/api/buffers/GpuBufferSlice$MappedView.close:()V
+     272: goto          302
+     275: astore        11
+     277: aload         10
+     279: ifnull        299
+     282: aload         10
+     284: invokevirtual #273                // Method com/mojang/renderpearl/api/buffers/GpuBufferSlice$MappedView.close:()V
+     287: goto          299
+     290: astore        12
+     292: aload         11
+     294: aload         12
+     296: invokevirtual #278                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     299: aload         11
+     301: athrow
+     302: aload         7
+     304: aload         9
+     306: lconst_0
+     307: iload         5
+     309: i2l
+     310: invokeinterface #223,  5          // InterfaceMethod com/mojang/renderpearl/api/buffers/GpuBuffer.slice:(JJ)Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;
+     315: aload_3
+     316: lconst_0
+     317: iload         5
+     319: i2l
+     320: invokeinterface #223,  5          // InterfaceMethod com/mojang/renderpearl/api/buffers/GpuBuffer.slice:(JJ)Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;
+     325: invokeinterface #282,  3          // InterfaceMethod com/mojang/renderpearl/api/commands/CommandEncoder.copyToBuffer:(Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;)V
+     330: aload         4
+     332: ifnull        366
+     335: aload         7
+     337: aload         9
+     339: iload         5
+     341: i2l
+     342: iload         6
+     344: i2l
+     345: invokeinterface #223,  5          // InterfaceMethod com/mojang/renderpearl/api/buffers/GpuBuffer.slice:(JJ)Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;
+     350: aload         4
+     352: lconst_0
+     353: iload         6
+     355: i2l
+     356: invokeinterface #223,  5          // InterfaceMethod com/mojang/renderpearl/api/buffers/GpuBuffer.slice:(JJ)Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;
+     361: invokeinterface #282,  3          // InterfaceMethod com/mojang/renderpearl/api/commands/CommandEncoder.copyToBuffer:(Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;)V
+     366: return
+    Exception table:
+       from    to  target type
+          45   262   275   Class java/lang/Throwable
+         282   287   290   Class java/lang/Throwable
+    LineNumberTable:
+      line 143: 0
+      line 146: 8
+      line 147: 15
+      line 148: 27
+      line 149: 45
+      line 150: 52
+      line 151: 82
+      line 152: 90
+      line 154: 93
+      line 155: 104
+      line 156: 138
+      line 157: 149
+      line 158: 152
+      line 159: 155
+      line 160: 185
+      line 161: 193
+      line 163: 196
+      line 164: 209
+      line 165: 228
+      line 166: 242
+      line 168: 254
+      line 169: 259
+      line 170: 262
+      line 148: 275
+      line 172: 302
+      line 173: 330
+      line 174: 335
+      line 176: 366
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+        138      11    15 slice   Lcom/mojang/blaze3d/vertex/ByteBufferBuilder$Result;
+         82      70    13  draw   Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+        228      26    14 sortState   Lcom/mojang/blaze3d/vertex/MeshData$SortState;
+        185      74    13  draw   Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+         52     210    11 buffer   Ljava/nio/ByteBuffer;
+         45     257    10  view   Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice$MappedView;
+          0     367     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+          0     367     1 device   Lcom/mojang/renderpearl/api/device/GpuDevice;
+          0     367     2 draws   Ljava/util/List;
+          0     367     3 vertexGpuBuffer   Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+          0     367     4 indexGpuBuffer   Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+          0     367     5 vertexBufferSize   I
+          0     367     6 indexBufferSize   I
+          8     359     7 commandEncoder   Lcom/mojang/renderpearl/api/commands/CommandEncoder;
+         15     352     8 stagingBufferSize   I
+         27     340     9 stagingBuffer   Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+
+  private static com.mojang.blaze3d.vertex.CompactVectorArray decodeSortingPoints(net.minecraft.client.renderer.StagedVertexBuffer$Draw);
+    Code:
+       0: aload_0
+       1: getfield      #117                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.format:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+       4: astore_1
+       5: new           #288                // class com/mojang/blaze3d/vertex/CompactVectorArray
+       8: dup
+       9: aload_0
+      10: getfield      #290                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.vertexCount:I
+      13: iconst_4
+      14: idiv
+      15: invokespecial #293                // Method com/mojang/blaze3d/vertex/CompactVectorArray."<init>":(I)V
+      18: astore_2
+      19: iconst_0
+      20: istore_3
+      21: aload_0
+      22: getfield      #245                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.vertexBufferSlices:Ljava/util/List;
+      25: invokeinterface #138,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      30: astore        4
+      32: aload         4
+      34: invokeinterface #142,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      39: ifeq          89
+      42: aload         4
+      44: invokeinterface #147,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      49: checkcast     #248                // class com/mojang/blaze3d/vertex/ByteBufferBuilder$Result
+      52: astore        5
+      54: aload         5
+      56: invokevirtual #294                // Method com/mojang/blaze3d/vertex/ByteBufferBuilder$Result.size:()I
+      59: aload_1
+      60: invokevirtual #152                // Method com/mojang/renderpearl/api/vertex/VertexFormat.getVertexSize:()I
+      63: idiv
+      64: istore        6
+      66: aload         5
+      68: invokevirtual #250                // Method com/mojang/blaze3d/vertex/ByteBufferBuilder$Result.byteBuffer:()Ljava/nio/ByteBuffer;
+      71: iload         6
+      73: aload_1
+      74: aload_2
+      75: iload_3
+      76: invokestatic  #297                // Method com/mojang/blaze3d/vertex/MeshData.decodeQuadCentroids:(Ljava/nio/ByteBuffer;ILcom/mojang/renderpearl/api/vertex/VertexFormat;Lcom/mojang/blaze3d/vertex/CompactVectorArray;I)V
+      79: iload_3
+      80: iload         6
+      82: iconst_4
+      83: idiv
+      84: iadd
+      85: istore_3
+      86: goto          32
+      89: aload_2
+      90: areturn
+    LineNumberTable:
+      line 179: 0
+      line 180: 5
+      line 181: 19
+      line 182: 21
+      line 183: 54
+      line 184: 66
+      line 185: 79
+      line 186: 86
+      line 187: 89
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+         66      20     6 vertexCount   I
+         54      32     5 vertexBuffer   Lcom/mojang/blaze3d/vertex/ByteBufferBuilder$Result;
+          0      91     0  draw   Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+          5      86     1 format   Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+         19      72     2 points   Lcom/mojang/blaze3d/vertex/CompactVectorArray;
+         21      70     3 offset   I
+
+  public net.minecraft.client.renderer.StagedVertexBuffer$ExecuteInfo getExecuteInfo(net.minecraft.client.renderer.StagedVertexBuffer$Draw);
+    Code:
+       0: aload_1
+       1: invokevirtual #151                // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw.isEmpty:()Z
+       4: ifeq          9
+       7: aconst_null
+       8: areturn
+       9: aload_0
+      10: getfield      #52                 // Field currentVertexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+      13: ifnonnull     27
+      16: new           #56                 // class java/lang/IllegalStateException
+      19: dup
+      20: ldc_w         #303                // String Cannot execute before upload
+      23: invokespecial #60                 // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      26: athrow
+      27: aload_1
+      28: getfield      #164                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.vertexOffset:I
+      31: aload_1
+      32: getfield      #117                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.format:Lcom/mojang/renderpearl/api/vertex/VertexFormat;
+      35: invokevirtual #152                // Method com/mojang/renderpearl/api/vertex/VertexFormat.getVertexSize:()I
+      38: idiv
+      39: istore_2
+      40: aload_0
+      41: getfield      #210                // Field currentIndexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+      44: ifnull        98
+      47: aload_1
+      48: getfield      #171                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.quadSorting:Lcom/mojang/blaze3d/vertex/VertexSorting;
+      51: ifnull        98
+      54: aload_1
+      55: invokevirtual #175                // Method net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexType:()Lcom/mojang/renderpearl/api/pipeline/IndexType;
+      58: astore_3
+      59: aload_1
+      60: getfield      #184                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexOffset:I
+      63: aload_3
+      64: getfield      #179                // Field com/mojang/renderpearl/api/pipeline/IndexType.bytes:I
+      67: idiv
+      68: istore        4
+      70: new           #305                // class net/minecraft/client/renderer/StagedVertexBuffer$ExecuteInfo
+      73: dup
+      74: aload_0
+      75: getfield      #52                 // Field currentVertexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+      78: aload_0
+      79: getfield      #210                // Field currentIndexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+      82: aload_3
+      83: iload_2
+      84: iload         4
+      86: aload_1
+      87: getfield      #187                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexCount:I
+      90: aload_1
+      91: getfield      #114                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.primitiveTopology:Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;
+      94: invokespecial #307                // Method net/minecraft/client/renderer/StagedVertexBuffer$ExecuteInfo."<init>":(Lcom/mojang/renderpearl/api/buffers/GpuBuffer;Lcom/mojang/renderpearl/api/buffers/GpuBuffer;Lcom/mojang/renderpearl/api/pipeline/IndexType;IIILcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;)V
+      97: areturn
+      98: aload_1
+      99: getfield      #114                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.primitiveTopology:Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;
+     102: invokestatic  #190                // Method com/mojang/blaze3d/systems/RenderSystem.getSequentialBuffer:(Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;)Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;
+     105: astore_3
+     106: aload_3
+     107: aload_1
+     108: getfield      #187                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexCount:I
+     111: invokevirtual #310                // Method com/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer.requestIndexCount:(I)V
+     114: new           #305                // class net/minecraft/client/renderer/StagedVertexBuffer$ExecuteInfo
+     117: dup
+     118: aload_0
+     119: getfield      #52                 // Field currentVertexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+     122: aconst_null
+     123: aload_3
+     124: invokevirtual #313                // Method com/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer.type:()Lcom/mojang/renderpearl/api/pipeline/IndexType;
+     127: iload_2
+     128: iconst_0
+     129: aload_1
+     130: getfield      #187                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexCount:I
+     133: aload_1
+     134: getfield      #114                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.primitiveTopology:Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;
+     137: invokespecial #307                // Method net/minecraft/client/renderer/StagedVertexBuffer$ExecuteInfo."<init>":(Lcom/mojang/renderpearl/api/buffers/GpuBuffer;Lcom/mojang/renderpearl/api/buffers/GpuBuffer;Lcom/mojang/renderpearl/api/pipeline/IndexType;IIILcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;)V
+     140: areturn
+    LineNumberTable:
+      line 191: 0
+      line 192: 7
+      line 194: 9
+      line 195: 16
+      line 197: 27
+      line 198: 40
+      line 199: 54
+      line 200: 59
+      line 201: 70
+      line 203: 98
+      line 204: 106
+      line 205: 114
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+         59      39     3 indexType   Lcom/mojang/renderpearl/api/pipeline/IndexType;
+         70      28     4 firstIndex   I
+        106      35     3 autoIndices   Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;
+          0     141     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+          0     141     1  draw   Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+         40     101     2 baseVertex   I
+
+  public void requestIndexCount(net.minecraft.client.renderer.StagedVertexBuffer$Draw);
+    Code:
+       0: aload_0
+       1: getfield      #210                // Field currentIndexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+       4: ifnull        14
+       7: aload_1
+       8: getfield      #171                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.quadSorting:Lcom/mojang/blaze3d/vertex/VertexSorting;
+      11: ifnonnull     30
+      14: aload_1
+      15: getfield      #114                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.primitiveTopology:Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;
+      18: invokestatic  #190                // Method com/mojang/blaze3d/systems/RenderSystem.getSequentialBuffer:(Lcom/mojang/renderpearl/api/pipeline/PrimitiveTopology;)Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;
+      21: astore_2
+      22: aload_2
+      23: aload_1
+      24: getfield      #187                // Field net/minecraft/client/renderer/StagedVertexBuffer$Draw.indexCount:I
+      27: invokevirtual #310                // Method com/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer.requestIndexCount:(I)V
+      30: return
+    LineNumberTable:
+      line 210: 0
+      line 211: 14
+      line 212: 22
+      line 214: 30
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+         22       8     2 autoIndices   Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;
+          0      31     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+          0      31     1  draw   Lnet/minecraft/client/renderer/StagedVertexBuffer$Draw;
+
+  public void endDraw();
+    Code:
+       0: aload_0
+       1: getfield      #10                 // Field draws:Ljava/util/List;
+       4: invokeinterface #316,  1          // InterfaceMethod java/util/List.clear:()V
+       9: aload_0
+      10: aconst_null
+      11: putfield      #52                 // Field currentVertexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+      14: aload_0
+      15: aconst_null
+      16: putfield      #210                // Field currentIndexBuffer:Lcom/mojang/renderpearl/api/buffers/GpuBuffer;
+      19: return
+    LineNumberTable:
+      line 217: 0
+      line 218: 9
+      line 219: 14
+      line 220: 19
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      20     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+
+  public void endFrame();
+    Code:
+       0: aload_0
+       1: invokevirtual #319                // Method endDraw:()V
+       4: invokestatic  #202                // Method com/mojang/blaze3d/systems/RenderSystem.getDevice:()Lcom/mojang/renderpearl/api/device/GpuDevice;
+       7: astore_1
+       8: aload_0
+       9: getfield      #36                 // Field stagingGpuBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      12: aload_1
+      13: invokevirtual #322                // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool.endFrame:(Lcom/mojang/renderpearl/api/device/GpuDevice;)V
+      16: aload_0
+      17: getfield      #41                 // Field vertexBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      20: aload_1
+      21: invokevirtual #322                // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool.endFrame:(Lcom/mojang/renderpearl/api/device/GpuDevice;)V
+      24: aload_0
+      25: getfield      #45                 // Field indexBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      28: aload_1
+      29: invokevirtual #322                // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool.endFrame:(Lcom/mojang/renderpearl/api/device/GpuDevice;)V
+      32: return
+    LineNumberTable:
+      line 223: 0
+      line 224: 4
+      line 225: 8
+      line 226: 16
+      line 227: 24
+      line 228: 32
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      33     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+          8      25     1 device   Lcom/mojang/renderpearl/api/device/GpuDevice;
+
+  public void close();
+    Code:
+       0: aload_0
+       1: getfield      #21                 // Field stagingBuffer:Lcom/mojang/blaze3d/vertex/ByteBufferBuilder;
+       4: invokevirtual #326                // Method com/mojang/blaze3d/vertex/ByteBufferBuilder.close:()V
+       7: aload_0
+       8: getfield      #36                 // Field stagingGpuBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      11: invokevirtual #327                // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool.close:()V
+      14: aload_0
+      15: getfield      #41                 // Field vertexBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      18: invokevirtual #327                // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool.close:()V
+      21: aload_0
+      22: getfield      #45                 // Field indexBufferPool:Lnet/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool;
+      25: invokevirtual #327                // Method net/minecraft/client/renderer/StagedVertexBuffer$GpuBufferPool.close:()V
+      28: return
+    LineNumberTable:
+      line 232: 0
+      line 233: 7
+      line 234: 14
+      line 235: 21
+      line 236: 28
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      29     0  this   Lnet/minecraft/client/renderer/StagedVertexBuffer;
+
+  private static java.lang.String lambda$new$2(java.util.function.Supplier);
+    Code:
+       0: aload_0
+       1: invokeinterface #328,  1          // InterfaceMethod java/util/function/Supplier.get:()Ljava/lang/Object;
+       6: checkcast     #72                 // class java/lang/String
+       9: invokedynamic #332,  0            // InvokeDynamic #4:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      14: areturn
+    LineNumberTable:
+      line 45: 0
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      15     0 label   Ljava/util/function/Supplier;
+
+  private static java.lang.String lambda$new$1(java.util.function.Supplier);
+    Code:
+       0: aload_0
+       1: invokeinterface #328,  1          // InterfaceMethod java/util/function/Supplier.get:()Ljava/lang/Object;
+       6: checkcast     #72                 // class java/lang/String
+       9: invokedynamic #333,  0            // InvokeDynamic #5:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      14: areturn
+    LineNumberTable:
+      line 44: 0
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      15     0 label   Ljava/util/function/Supplier;
+
+  private static java.lang.String lambda$new$0(java.util.function.Supplier);
+    Code:
+       0: aload_0
+       1: invokeinterface #328,  1          // InterfaceMethod java/util/function/Supplier.get:()Ljava/lang/Object;
+       6: checkcast     #72                 // class java/lang/String
+       9: invokedynamic #334,  0            // InvokeDynamic #6:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      14: areturn
+    LineNumberTable:
+      line 43: 0
+    LocalVariableTable:
+      Start  Length  Slot  Name   Signature
+          0      15     0 label   Ljava/util/function/Supplier;
+}

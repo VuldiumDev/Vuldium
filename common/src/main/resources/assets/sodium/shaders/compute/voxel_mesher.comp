@@ -1,0 +1,500 @@
+#version 460 core
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_ballot : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+
+// Воксельная сетка 18x18x18 в локальной памяти рабочей группы (LDS = ~23 КБ)
+// 18x18x18 включает внутреннюю секцию 16x16x16 + 1 воксель каймы для бесшовного сшивания
+shared uint s_VoxelGrid[18 * 18 * 18];
+
+// Формат вершины SodkamPackedVertex (16 байт)
+struct PackedVertex {
+    uint posPayload;      // x: 4 bit, y: 4 bit, z: 4 bit, corner: 2 bit, face: 3 bit, ao: 2 bit, flags: 15 bit
+    uint colorPayload;    // RGBA8_UNORM Packed Color с учетом AO
+    uint uvLightPayload;  // UV: 16 bit, BlockLight: 8 bit, SkyLight: 8 bit
+    uint materialPayload; // Material/Flags: 16 bit, Section: 16 bit
+};
+
+// SSBO 0: Сырая палитра состояний блоков секции (4096 вокселей)
+layout(std430, set = 0, binding = 0) readonly buffer RawChunkPalette {
+    uint u_BlockStates[4096];
+};
+
+// SSBO 1: Выходной буфер геометрии в VRAM (Device-Local SodkamBufferArena)
+layout(std430, set = 0, binding = 1) writeonly buffer OutputVertexBuffer {
+    PackedVertex u_Vertices[];
+};
+
+// SSBO 2: Выходной индексный буфер геометрии в VRAM
+layout(std430, set = 0, binding = 2) writeonly buffer OutputIndexBuffer {
+    uint u_Indices[];
+};
+
+// Структура непрямого вызова отрисовки VkDrawIndexedIndirectCommand
+struct DrawIndexedIndirectCommand {
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int  vertexOffset;
+    uint firstInstance;
+};
+
+// SSBO 3: Атомарный глобальный счетчик сгенерированных вершин/индексов и команда DrawIndirect
+layout(std430, set = 0, binding = 3) buffer MeshAllocationCounter {
+    uint u_GlobalVertexCount;
+    uint u_GlobalIndexCount;
+    uint _pad0;
+    uint _pad1;
+    DrawIndexedIndirectCommand u_IndirectCommand;
+};
+
+// Push Constants для метаданных секции
+layout(push_constant) uniform MesherConstants {
+    ivec4 u_SectionPos;   // xyz: мировые координаты секции в чанках, w: sectionIndex
+    uint  u_MaterialBits; // Битовые флаги материала / фазы шейдинга
+    uint  u_LightData;    // Базовое освещение секции (BlockLight, SkyLight)
+};
+
+// Проверка прозрачности блока по BlockState ID (0 = воздух)
+bool isTransparent(uint blockId) {
+    return blockId == 0u;
+}
+
+bool isBlockOpaque(uint voxel) {
+    return voxel != 0u;
+}
+
+// Расчет Ambient Occlusion (0..3) по 3 окружающим вокселям угла
+// Формула: AO = side1 && side2 ? 0 : (3 - (side1 + side2 + corner))
+uint computeAO(bool side1, bool side2, bool corner) {
+    if (side1 && side2) {
+        return 0u;
+    }
+    return 3u - (uint(side1) + uint(side2) + uint(corner));
+}
+
+// Упаковка 16-байтной позиции вершины (posPayload)
+// x: 4 бита (0..15), y: 4 бита (0..15), z: 4 бита (0..15), corner: 2 бита (0..3), face: 3 бита (0..5), ao: 2 бита (0..3)
+uint packPosPayload(int x, int y, int z, uint corner, uint face, uint ao) {
+    return (uint(x & 0xF)) |
+           (uint(y & 0xF) << 4) |
+           (uint(z & 0xF) << 8) |
+           ((corner & 3u) << 12) |
+           ((face & 7u) << 14) |
+           ((ao & 3u) << 17);
+}
+
+// Упаковка цвета с учетом AO множителя
+uint packColorWithAO(uint baseColor, uint aoLevel) {
+    // Таблица коэффициентов затенения AO: 0: 0.46, 1: 0.60, 2: 0.78, 3: 1.00
+    const uint aoMult[4] = uint[4](118u, 153u, 200u, 255u);
+    uint mult = aoMult[aoLevel & 3u];
+
+    uint r = (((baseColor)       & 0xFFu) * mult) / 255u;
+    uint g = (((baseColor >> 8)  & 0xFFu) * mult) / 255u;
+    uint b = (((baseColor >> 16) & 0xFFu) * mult) / 255u;
+    uint a = (baseColor >> 24) & 0xFFu;
+
+    return r | (g << 8) | (b << 16) | (a << 24);
+}
+
+// Упаковка UV и карт освещения: UV: 16 bit, BlockLight: 8 bit, SkyLight: 8 bit
+uint packUvLightPayload(uint u, uint v, uint blockLight, uint skyLight) {
+    uint packedUv = (u & 0xFFu) | ((v & 0xFFu) << 8);
+    return packedUv | ((blockLight & 0xFFu) << 16) | ((skyLight & 0xFFu) << 24);
+}
+
+// Линейный индекс в воксельной сетке 18x18x18
+uint gridIndex(int x, int y, int z) {
+    return uint(x + y * 18 + z * 324);
+}
+
+void main() {
+    ivec3 localThread = ivec3(gl_LocalInvocationID.xyz);
+    uint threadLinear = localThread.x + localThread.y * 8 + localThread.z * 64; // 0..511
+
+    // 1. Кооперативная параллельная загрузка воксельной сетки 18x18x18 в LDS
+    // 5832 вокселей загружаются 512 потоками (по 11-12 элементов на поток)
+    for (uint i = threadLinear; i < 5832u; i += 512u) {
+        uint gz = i / 324u;
+        uint rem = i % 324u;
+        uint gy = rem / 18u;
+        uint gx = rem % 18u;
+
+        if (gx >= 1u && gx <= 16u && gy >= 1u && gy <= 16u && gz >= 1u && gz <= 16u) {
+            uint chunkBlockIdx = (gx - 1u) + (gy - 1u) * 16u + (gz - 1u) * 256u;
+            s_VoxelGrid[i] = u_BlockStates[chunkBlockIdx];
+        } else {
+            // Граничные воксели соседних секций (по умолчанию воздух, если не переданы явно)
+            s_VoxelGrid[i] = 0u;
+        }
+    }
+    barrier();
+
+    // 2. Каждый поток обрабатывает блок 2x1x1 вокселей внутри секции 16x16x16
+    // localThread (8x8x8) -> X охватывает 16 вокселей через шаг 2
+    int baseY = localThread.y;
+    int baseZ = localThread.z;
+
+    for (int stepX = 0; stepX < 2; stepX++) {
+        int baseX = localThread.x * 2 + stepX;
+
+        // Координаты вокселя внутри s_VoxelGrid (сдвиг +1 из-за каймы)
+        int vx = baseX + 1;
+        int vy = baseY + 1;
+        int vz = baseZ + 1;
+
+        uint currentBlock = s_VoxelGrid[gridIndex(vx, vy, vz)];
+        uint activeFacesMask = 0u;
+
+        if (currentBlock != 0u) {
+            // Тест 6 соседних граней: -X, +X, -Y, +Y, -Z, +Z
+            if (isTransparent(s_VoxelGrid[gridIndex(vx - 1, vy, vz)])) activeFacesMask |= (1u << 0);
+            if (isTransparent(s_VoxelGrid[gridIndex(vx + 1, vy, vz)])) activeFacesMask |= (1u << 1);
+            if (isTransparent(s_VoxelGrid[gridIndex(vx, vy - 1, vz)])) activeFacesMask |= (1u << 2);
+            if (isTransparent(s_VoxelGrid[gridIndex(vx, vy + 1, vz)])) activeFacesMask |= (1u << 3);
+            if (isTransparent(s_VoxelGrid[gridIndex(vx, vy, vz - 1)])) activeFacesMask |= (1u << 4);
+            if (isTransparent(s_VoxelGrid[gridIndex(vx, vy, vz + 1)])) activeFacesMask |= (1u << 5);
+        }
+
+        uint faceCount = bitCount(activeFacesMask);
+        uint vertexCount = faceCount * 4u; // 4 вершины на каждую видимую грань
+        uint indexCount = faceCount * 6u;  // 6 индексов на каждую видимую грань
+
+        // 3. Аппаратное волновое выделение памяти без блокировок (Wave Intrinsics)
+        uvec4 ballot = subgroupBallot(vertexCount > 0u);
+        uint localVertexOffset = subgroupExclusiveAdd(vertexCount);
+        uint waveTotalVertices = subgroupAdd(vertexCount);
+
+        uint localIndexOffset = subgroupExclusiveAdd(indexCount);
+        uint waveTotalIndices = subgroupAdd(indexCount);
+
+        uint waveGlobalVertexBase = 0u;
+        uint waveGlobalIndexBase = 0u;
+        if (subgroupElect()) {
+            if (waveTotalVertices > 0u) {
+                waveGlobalVertexBase = atomicAdd(u_GlobalVertexCount, waveTotalVertices);
+            }
+            if (waveTotalIndices > 0u) {
+                waveGlobalIndexBase = atomicAdd(u_GlobalIndexCount, waveTotalIndices);
+                atomicAdd(u_IndirectCommand.indexCount, waveTotalIndices);
+                u_IndirectCommand.instanceCount = 1u;
+                u_IndirectCommand.firstIndex = 0u;
+                u_IndirectCommand.vertexOffset = 0;
+                u_IndirectCommand.firstInstance = 0u;
+            }
+        }
+        waveGlobalVertexBase = subgroupBroadcastFirst(waveGlobalVertexBase);
+        waveGlobalIndexBase = subgroupBroadcastFirst(waveGlobalIndexBase);
+
+        // 4. Прямая генерация геометрии и индексов в VRAM
+        if (vertexCount > 0u) {
+            uint targetVertexBase = waveGlobalVertexBase + localVertexOffset;
+            uint targetIndexBase = waveGlobalIndexBase + localIndexOffset;
+            uint outQuadIdx = 0u;
+
+            uint baseColor = 0xFFFFFFFFu; // Базовый цвет квада (RGBA)
+            uint blockLight = u_LightData & 0xFFu;
+            uint skyLight = (u_LightData >> 8) & 0xFFu;
+            uint matPayload = (u_MaterialBits & 0xFFFFu) | ((u_SectionPos.w & 0xFFFFu) << 16);
+
+            // Обработка 6 активных граней
+            // Face 0: -X (West)
+            if ((activeFacesMask & (1u << 0)) != 0u) {
+                uint ao0 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz - 1)]));
+                uint ao1 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz - 1)]));
+                uint ao2 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz + 1)]));
+                uint ao3 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz + 1)]));
+
+                uint vIdx = targetVertexBase + outQuadIdx * 4u;
+                u_Vertices[vIdx + 0].posPayload = packPosPayload(baseX, baseY, baseZ, 0u, 0u, ao0);
+                u_Vertices[vIdx + 0].colorPayload = packColorWithAO(baseColor, ao0);
+                u_Vertices[vIdx + 0].uvLightPayload = packUvLightPayload(0u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 0].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 1].posPayload = packPosPayload(baseX, baseY + 1, baseZ, 1u, 0u, ao1);
+                u_Vertices[vIdx + 1].colorPayload = packColorWithAO(baseColor, ao1);
+                u_Vertices[vIdx + 1].uvLightPayload = packUvLightPayload(0u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 1].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 2].posPayload = packPosPayload(baseX, baseY + 1, baseZ + 1, 2u, 0u, ao2);
+                u_Vertices[vIdx + 2].colorPayload = packColorWithAO(baseColor, ao2);
+                u_Vertices[vIdx + 2].uvLightPayload = packUvLightPayload(255u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 2].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 3].posPayload = packPosPayload(baseX, baseY, baseZ + 1, 3u, 0u, ao3);
+                u_Vertices[vIdx + 3].colorPayload = packColorWithAO(baseColor, ao3);
+                u_Vertices[vIdx + 3].uvLightPayload = packUvLightPayload(255u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 3].materialPayload = matPayload;
+
+                // Генерация 6 индексов квада с подавлением диагонального перекоса освещения
+                uint iIdx = targetIndexBase + outQuadIdx * 6u;
+                bool flip = (ao0 + ao2) > (ao1 + ao3);
+                if (flip) {
+                    u_Indices[iIdx + 0] = vIdx + 1u;
+                    u_Indices[iIdx + 1] = vIdx + 2u;
+                    u_Indices[iIdx + 2] = vIdx + 3u;
+                    u_Indices[iIdx + 3] = vIdx + 3u;
+                    u_Indices[iIdx + 4] = vIdx + 0u;
+                    u_Indices[iIdx + 5] = vIdx + 1u;
+                } else {
+                    u_Indices[iIdx + 0] = vIdx + 0u;
+                    u_Indices[iIdx + 1] = vIdx + 1u;
+                    u_Indices[iIdx + 2] = vIdx + 2u;
+                    u_Indices[iIdx + 3] = vIdx + 2u;
+                    u_Indices[iIdx + 4] = vIdx + 3u;
+                    u_Indices[iIdx + 5] = vIdx + 0u;
+                }
+
+                outQuadIdx++;
+            }
+
+            // Face 1: +X (East)
+            if ((activeFacesMask & (1u << 1)) != 0u) {
+                uint ao0 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz + 1)]));
+                uint ao1 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz + 1)]));
+                uint ao2 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz - 1)]));
+                uint ao3 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz - 1)]));
+
+                uint vIdx = targetVertexBase + outQuadIdx * 4u;
+                u_Vertices[vIdx + 0].posPayload = packPosPayload(baseX + 1, baseY, baseZ + 1, 0u, 1u, ao0);
+                u_Vertices[vIdx + 0].colorPayload = packColorWithAO(baseColor, ao0);
+                u_Vertices[vIdx + 0].uvLightPayload = packUvLightPayload(0u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 0].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 1].posPayload = packPosPayload(baseX + 1, baseY + 1, baseZ + 1, 1u, 1u, ao1);
+                u_Vertices[vIdx + 1].colorPayload = packColorWithAO(baseColor, ao1);
+                u_Vertices[vIdx + 1].uvLightPayload = packUvLightPayload(0u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 1].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 2].posPayload = packPosPayload(baseX + 1, baseY + 1, baseZ, 2u, 1u, ao2);
+                u_Vertices[vIdx + 2].colorPayload = packColorWithAO(baseColor, ao2);
+                u_Vertices[vIdx + 2].uvLightPayload = packUvLightPayload(255u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 2].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 3].posPayload = packPosPayload(baseX + 1, baseY, baseZ, 3u, 1u, ao3);
+                u_Vertices[vIdx + 3].colorPayload = packColorWithAO(baseColor, ao3);
+                u_Vertices[vIdx + 3].uvLightPayload = packUvLightPayload(255u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 3].materialPayload = matPayload;
+
+                uint iIdx = targetIndexBase + outQuadIdx * 6u;
+                bool flip = (ao0 + ao2) > (ao1 + ao3);
+                if (flip) {
+                    u_Indices[iIdx + 0] = vIdx + 1u;
+                    u_Indices[iIdx + 1] = vIdx + 2u;
+                    u_Indices[iIdx + 2] = vIdx + 3u;
+                    u_Indices[iIdx + 3] = vIdx + 3u;
+                    u_Indices[iIdx + 4] = vIdx + 0u;
+                    u_Indices[iIdx + 5] = vIdx + 1u;
+                } else {
+                    u_Indices[iIdx + 0] = vIdx + 0u;
+                    u_Indices[iIdx + 1] = vIdx + 1u;
+                    u_Indices[iIdx + 2] = vIdx + 2u;
+                    u_Indices[iIdx + 3] = vIdx + 2u;
+                    u_Indices[iIdx + 4] = vIdx + 3u;
+                    u_Indices[iIdx + 5] = vIdx + 0u;
+                }
+
+                outQuadIdx++;
+            }
+
+            // Face 2: -Y (Down)
+            if ((activeFacesMask & (1u << 2)) != 0u) {
+                uint ao0 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy - 1, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz + 1)]));
+                uint ao1 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy - 1, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz - 1)]));
+                uint ao2 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy - 1, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz - 1)]));
+                uint ao3 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy - 1, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz + 1)]));
+
+                uint vIdx = targetVertexBase + outQuadIdx * 4u;
+                u_Vertices[vIdx + 0].posPayload = packPosPayload(baseX, baseY, baseZ + 1, 0u, 2u, ao0);
+                u_Vertices[vIdx + 0].colorPayload = packColorWithAO(baseColor, ao0);
+                u_Vertices[vIdx + 0].uvLightPayload = packUvLightPayload(0u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 0].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 1].posPayload = packPosPayload(baseX, baseY, baseZ, 1u, 2u, ao1);
+                u_Vertices[vIdx + 1].colorPayload = packColorWithAO(baseColor, ao1);
+                u_Vertices[vIdx + 1].uvLightPayload = packUvLightPayload(0u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 1].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 2].posPayload = packPosPayload(baseX + 1, baseY, baseZ, 2u, 2u, ao2);
+                u_Vertices[vIdx + 2].colorPayload = packColorWithAO(baseColor, ao2);
+                u_Vertices[vIdx + 2].uvLightPayload = packUvLightPayload(255u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 2].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 3].posPayload = packPosPayload(baseX + 1, baseY, baseZ + 1, 3u, 2u, ao3);
+                u_Vertices[vIdx + 3].colorPayload = packColorWithAO(baseColor, ao3);
+                u_Vertices[vIdx + 3].uvLightPayload = packUvLightPayload(255u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 3].materialPayload = matPayload;
+
+                uint iIdx = targetIndexBase + outQuadIdx * 6u;
+                bool flip = (ao0 + ao2) > (ao1 + ao3);
+                if (flip) {
+                    u_Indices[iIdx + 0] = vIdx + 1u;
+                    u_Indices[iIdx + 1] = vIdx + 2u;
+                    u_Indices[iIdx + 2] = vIdx + 3u;
+                    u_Indices[iIdx + 3] = vIdx + 3u;
+                    u_Indices[iIdx + 4] = vIdx + 0u;
+                    u_Indices[iIdx + 5] = vIdx + 1u;
+                } else {
+                    u_Indices[iIdx + 0] = vIdx + 0u;
+                    u_Indices[iIdx + 1] = vIdx + 1u;
+                    u_Indices[iIdx + 2] = vIdx + 2u;
+                    u_Indices[iIdx + 3] = vIdx + 2u;
+                    u_Indices[iIdx + 4] = vIdx + 3u;
+                    u_Indices[iIdx + 5] = vIdx + 0u;
+                }
+
+                outQuadIdx++;
+            }
+
+            // Face 3: +Y (Up)
+            if ((activeFacesMask & (1u << 3)) != 0u) {
+                uint ao0 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy + 1, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz - 1)]));
+                uint ao1 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy + 1, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz + 1)]));
+                uint ao2 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy + 1, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz + 1)]));
+                uint ao3 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy + 1, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz - 1)]));
+
+                uint vIdx = targetVertexBase + outQuadIdx * 4u;
+                u_Vertices[vIdx + 0].posPayload = packPosPayload(baseX, baseY + 1, baseZ, 0u, 3u, ao0);
+                u_Vertices[vIdx + 0].colorPayload = packColorWithAO(baseColor, ao0);
+                u_Vertices[vIdx + 0].uvLightPayload = packUvLightPayload(0u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 0].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 1].posPayload = packPosPayload(baseX, baseY + 1, baseZ + 1, 1u, 3u, ao1);
+                u_Vertices[vIdx + 1].colorPayload = packColorWithAO(baseColor, ao1);
+                u_Vertices[vIdx + 1].uvLightPayload = packUvLightPayload(0u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 1].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 2].posPayload = packPosPayload(baseX + 1, baseY + 1, baseZ + 1, 2u, 3u, ao2);
+                u_Vertices[vIdx + 2].colorPayload = packColorWithAO(baseColor, ao2);
+                u_Vertices[vIdx + 2].uvLightPayload = packUvLightPayload(255u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 2].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 3].posPayload = packPosPayload(baseX + 1, baseY + 1, baseZ, 3u, 3u, ao3);
+                u_Vertices[vIdx + 3].colorPayload = packColorWithAO(baseColor, ao3);
+                u_Vertices[vIdx + 3].uvLightPayload = packUvLightPayload(255u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 3].materialPayload = matPayload;
+
+                uint iIdx = targetIndexBase + outQuadIdx * 6u;
+                bool flip = (ao0 + ao2) > (ao1 + ao3);
+                if (flip) {
+                    u_Indices[iIdx + 0] = vIdx + 1u;
+                    u_Indices[iIdx + 1] = vIdx + 2u;
+                    u_Indices[iIdx + 2] = vIdx + 3u;
+                    u_Indices[iIdx + 3] = vIdx + 3u;
+                    u_Indices[iIdx + 4] = vIdx + 0u;
+                    u_Indices[iIdx + 5] = vIdx + 1u;
+                } else {
+                    u_Indices[iIdx + 0] = vIdx + 0u;
+                    u_Indices[iIdx + 1] = vIdx + 1u;
+                    u_Indices[iIdx + 2] = vIdx + 2u;
+                    u_Indices[iIdx + 3] = vIdx + 2u;
+                    u_Indices[iIdx + 4] = vIdx + 3u;
+                    u_Indices[iIdx + 5] = vIdx + 0u;
+                }
+
+                outQuadIdx++;
+            }
+
+            // Face 4: -Z (North)
+            if ((activeFacesMask & (1u << 4)) != 0u) {
+                uint ao0 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy - 1, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz - 1)]));
+                uint ao1 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy + 1, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz - 1)]));
+                uint ao2 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy + 1, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz - 1)]));
+                uint ao3 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy - 1, vz - 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz - 1)]));
+
+                uint vIdx = targetVertexBase + outQuadIdx * 4u;
+                u_Vertices[vIdx + 0].posPayload = packPosPayload(baseX + 1, baseY, baseZ, 0u, 4u, ao0);
+                u_Vertices[vIdx + 0].colorPayload = packColorWithAO(baseColor, ao0);
+                u_Vertices[vIdx + 0].uvLightPayload = packUvLightPayload(0u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 0].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 1].posPayload = packPosPayload(baseX + 1, baseY + 1, baseZ, 1u, 4u, ao1);
+                u_Vertices[vIdx + 1].colorPayload = packColorWithAO(baseColor, ao1);
+                u_Vertices[vIdx + 1].uvLightPayload = packUvLightPayload(0u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 1].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 2].posPayload = packPosPayload(baseX, baseY + 1, baseZ, 2u, 4u, ao2);
+                u_Vertices[vIdx + 2].colorPayload = packColorWithAO(baseColor, ao2);
+                u_Vertices[vIdx + 2].uvLightPayload = packUvLightPayload(255u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 2].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 3].posPayload = packPosPayload(baseX, baseY, baseZ, 3u, 4u, ao3);
+                u_Vertices[vIdx + 3].colorPayload = packColorWithAO(baseColor, ao3);
+                u_Vertices[vIdx + 3].uvLightPayload = packUvLightPayload(255u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 3].materialPayload = matPayload;
+
+                uint iIdx = targetIndexBase + outQuadIdx * 6u;
+                bool flip = (ao0 + ao2) > (ao1 + ao3);
+                if (flip) {
+                    u_Indices[iIdx + 0] = vIdx + 1u;
+                    u_Indices[iIdx + 1] = vIdx + 2u;
+                    u_Indices[iIdx + 2] = vIdx + 3u;
+                    u_Indices[iIdx + 3] = vIdx + 3u;
+                    u_Indices[iIdx + 4] = vIdx + 0u;
+                    u_Indices[iIdx + 5] = vIdx + 1u;
+                } else {
+                    u_Indices[iIdx + 0] = vIdx + 0u;
+                    u_Indices[iIdx + 1] = vIdx + 1u;
+                    u_Indices[iIdx + 2] = vIdx + 2u;
+                    u_Indices[iIdx + 3] = vIdx + 2u;
+                    u_Indices[iIdx + 4] = vIdx + 3u;
+                    u_Indices[iIdx + 5] = vIdx + 0u;
+                }
+
+                outQuadIdx++;
+            }
+
+            // Face 5: +Z (South)
+            if ((activeFacesMask & (1u << 5)) != 0u) {
+                uint ao0 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy - 1, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy - 1, vz + 1)]));
+                uint ao1 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy + 1, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx - 1, vy + 1, vz + 1)]));
+                uint ao2 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy + 1, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy + 1, vz + 1)]));
+                uint ao3 = computeAO(isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx, vy - 1, vz + 1)]), isBlockOpaque(s_VoxelGrid[gridIndex(vx + 1, vy - 1, vz + 1)]));
+
+                uint vIdx = targetVertexBase + outQuadIdx * 4u;
+                u_Vertices[vIdx + 0].posPayload = packPosPayload(baseX, baseY, baseZ + 1, 0u, 5u, ao0);
+                u_Vertices[vIdx + 0].colorPayload = packColorWithAO(baseColor, ao0);
+                u_Vertices[vIdx + 0].uvLightPayload = packUvLightPayload(0u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 0].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 1].posPayload = packPosPayload(baseX, baseY + 1, baseZ + 1, 1u, 5u, ao1);
+                u_Vertices[vIdx + 1].colorPayload = packColorWithAO(baseColor, ao1);
+                u_Vertices[vIdx + 1].uvLightPayload = packUvLightPayload(0u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 1].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 2].posPayload = packPosPayload(baseX + 1, baseY + 1, baseZ + 1, 2u, 5u, ao2);
+                u_Vertices[vIdx + 2].colorPayload = packColorWithAO(baseColor, ao2);
+                u_Vertices[vIdx + 2].uvLightPayload = packUvLightPayload(255u, 255u, blockLight, skyLight);
+                u_Vertices[vIdx + 2].materialPayload = matPayload;
+
+                u_Vertices[vIdx + 3].posPayload = packPosPayload(baseX + 1, baseY, baseZ + 1, 3u, 5u, ao3);
+                u_Vertices[vIdx + 3].colorPayload = packColorWithAO(baseColor, ao3);
+                u_Vertices[vIdx + 3].uvLightPayload = packUvLightPayload(255u, 0u, blockLight, skyLight);
+                u_Vertices[vIdx + 3].materialPayload = matPayload;
+
+                uint iIdx = targetIndexBase + outQuadIdx * 6u;
+                bool flip = (ao0 + ao2) > (ao1 + ao3);
+                if (flip) {
+                    u_Indices[iIdx + 0] = vIdx + 1u;
+                    u_Indices[iIdx + 1] = vIdx + 2u;
+                    u_Indices[iIdx + 2] = vIdx + 3u;
+                    u_Indices[iIdx + 3] = vIdx + 3u;
+                    u_Indices[iIdx + 4] = vIdx + 0u;
+                    u_Indices[iIdx + 5] = vIdx + 1u;
+                } else {
+                    u_Indices[iIdx + 0] = vIdx + 0u;
+                    u_Indices[iIdx + 1] = vIdx + 1u;
+                    u_Indices[iIdx + 2] = vIdx + 2u;
+                    u_Indices[iIdx + 3] = vIdx + 2u;
+                    u_Indices[iIdx + 4] = vIdx + 3u;
+                    u_Indices[iIdx + 5] = vIdx + 0u;
+                }
+
+                outQuadIdx++;
+            }
+        }
+    }
+}

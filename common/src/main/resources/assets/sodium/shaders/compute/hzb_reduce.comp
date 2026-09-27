@@ -1,0 +1,46 @@
+#version 450 core
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+// Исходный Mip-уровень пирамиды глубин (или Z-буфер кадра для Mip 0)
+layout(set = 0, binding = 0) uniform sampler2D u_InDepth;
+
+// Выходной уменьшенный в 2 раза Mip-уровень
+layout(set = 0, binding = 1, r32f) uniform writeonly image2D u_OutDepth;
+
+layout(push_constant) uniform HzbReduceConstants {
+    vec2 inDimensions;     // Разрешение входного уровня
+    vec2 outDimensions;    // Разрешение выходного уровня
+    uint isReverseZ;       // 1 = Reverse-Z (1..0), 0 = Standard-Z (0..1)
+};
+
+void main() {
+    ivec2 outCoord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 outSize = ivec2(outDimensions);
+
+    if (outCoord.x >= outSize.x || outCoord.y >= outSize.y) {
+        return;
+    }
+
+    // Блок 2x2 текселей входного уровня
+    ivec2 inCoord = outCoord * 2;
+    ivec2 maxIn = ivec2(inDimensions) - ivec2(1);
+
+    // Считывание 4 глубин вокруг центра
+    float d0 = texelFetch(u_InDepth, clamp(inCoord + ivec2(0, 0), ivec2(0), maxIn), 0).r;
+    float d1 = texelFetch(u_InDepth, clamp(inCoord + ivec2(1, 0), ivec2(0), maxIn), 0).r;
+    float d2 = texelFetch(u_InDepth, clamp(inCoord + ivec2(0, 1), ivec2(0), maxIn), 0).r;
+    float d3 = texelFetch(u_InDepth, clamp(inCoord + ivec2(1, 1), ivec2(0), maxIn), 0).r;
+
+    // Консервативная редукция окклюдеров:
+    // Для стандартного Z (0 = near, 1 = far): берем max (самая дальняя точка бокса как консервативный окклюдер)
+    // Для Reverse-Z (1 = near, 0 = far): берем min
+    float depth;
+    if (isReverseZ != 0u) {
+        depth = min(min(d0, d1), min(d2, d3));
+    } else {
+        depth = max(max(d0, d1), max(d2, d3));
+    }
+
+    imageStore(u_OutDepth, outCoord, vec4(depth, 0.0, 0.0, 0.0));
+}

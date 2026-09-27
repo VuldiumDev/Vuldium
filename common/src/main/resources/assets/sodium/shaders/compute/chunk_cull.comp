@@ -1,0 +1,101 @@
+#version 450 core
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_ballot : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+// Структура кандидата чанка на входе (std430, 48 байт)
+struct ChunkCandidate {
+    vec4 aabbMin;       // xyz: Минимальные мировые координаты AABB, w: indexCount (floatBitsToUint)
+    vec4 aabbMax;       // xyz: Максимальные мировые координаты AABB, w: firstIndex (floatBitsToUint)
+    int  vertexOffset;  // Базовое смещение вершин в VRAM
+    uint instanceCount; // Обычно 1
+    uint firstInstance; // Обычно 0
+    uint flags;         // 1 = активен, 0 = пустой/выгружен
+};
+
+// Выходная структура VkDrawIndexedIndirectCommand (std430, 20 байт)
+struct VkDrawIndexedIndirectCommand {
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int  vertexOffset;
+    uint firstInstance;
+};
+
+// SSBO 0: Входные кандидаты секций чанков
+layout(std430, set = 0, binding = 0) readonly buffer CandidatesBuffer {
+    ChunkCandidate candidates[];
+};
+
+// SSBO 1: Выходной буфер косвенных вызовов
+layout(std430, set = 0, binding = 1) writeonly buffer OutputCommandsBuffer {
+    VkDrawIndexedIndirectCommand outputCommands[];
+};
+
+// SSBO 2: Атомарный счетчик видимых вызовов для vkCmdDrawIndexedIndirectCount
+layout(std430, set = 0, binding = 2) buffer DrawCountBuffer {
+    uint drawCount;
+};
+
+// Push Constants (100 байт из 128 допустимых)
+layout(push_constant) uniform CullConstants {
+    vec4 frustumPlanes[6]; // Уравнения 6 плоскостей усеченной пирамиды (Ax + By + Cz + D = 0)
+    uint totalChunks;      // Общее количество проверяемых чанков
+};
+
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    bool isVisible = false;
+    ChunkCandidate candidate;
+
+    if (index < totalChunks) {
+        candidate = candidates[index];
+        if ((candidate.flags & 1u) != 0u) {
+            vec3 bMin = candidate.aabbMin.xyz;
+            vec3 bMax = candidate.aabbMax.xyz;
+
+            isVisible = true;
+            for (int i = 0; i < 6; ++i) {
+                vec4 plane = frustumPlanes[i];
+                vec3 p = mix(bMin, bMax, greaterThan(plane.xyz, vec3(0.0)));
+                if (dot(plane.xyz, p) + plane.w < 0.0) {
+                    isVisible = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    // --- Wave Intrinsics (VK_KHR_shader_subgroup_arithmetic & ballot) ---
+    // 1. Сборка битовой маски видимости всей волны (subgroup)
+    uvec4 ballot = subgroupBallot(isVisible);
+
+    // 2. Локальное смещение внутри волны без глобальных атомиков
+    uint localOffset = subgroupBallotExclusiveBitCount(ballot);
+
+    // 3. Общее число видимых чанков всей волны
+    uint totalWaveCount = subgroupBallotBitCount(ballot);
+
+    // 4. Ровно один поток (subgroupElect) резервирует непрерывный диапазон в Draw buffer
+    uint baseIndex = 0u;
+    if (subgroupElect()) {
+        if (totalWaveCount > 0u) {
+            baseIndex = atomicAdd(drawCount, totalWaveCount);
+        }
+    }
+
+    // 5. Аппаратный broadcast baseIndex на все потоки волны
+    baseIndex = subgroupBroadcastFirst(baseIndex);
+
+    // 6. Потоки, прошедшие тест, пишут команды в VRAM напрямую по индексу baseIndex + localOffset
+    if (isVisible) {
+        uint slot = baseIndex + localOffset;
+        outputCommands[slot].indexCount = floatBitsToUint(candidate.aabbMin.w);
+        outputCommands[slot].instanceCount = candidate.instanceCount;
+        outputCommands[slot].firstIndex = floatBitsToUint(candidate.aabbMax.w);
+        outputCommands[slot].vertexOffset = candidate.vertexOffset;
+        outputCommands[slot].firstInstance = candidate.firstInstance;
+    }
+}

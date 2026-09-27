@@ -1,0 +1,175 @@
+#version 450 core
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_ballot : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+// Структура кандидата чанка на входе (std430, 48 байт)
+struct ChunkCandidate {
+    vec4 aabbMin;       // xyz: Минимальные мировые координаты AABB, w: indexCount (floatBitsToUint)
+    vec4 aabbMax;       // xyz: Максимальные мировые координаты AABB, w: firstIndex (floatBitsToUint)
+    int  vertexOffset;  // Базовое смещение вершин в VRAM
+    uint instanceCount; // Обычно 1
+    uint firstInstance; // Обычно 0
+    uint flags;         // bit 0: активен, bit 1: видимость в предыдущем кадре
+};
+
+// Выходная структура VkDrawIndexedIndirectCommand (std430, 20 байт)
+struct VkDrawIndexedIndirectCommand {
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int  vertexOffset;
+    uint firstInstance;
+};
+
+// SSBO 0: Входные кандидаты секций чанков
+layout(std430, set = 0, binding = 0) readonly buffer CandidatesBuffer {
+    ChunkCandidate candidates[];
+};
+
+// SSBO 1: Выходной буфер косвенных вызовов
+layout(std430, set = 0, binding = 1) writeonly buffer OutputCommandsBuffer {
+    VkDrawIndexedIndirectCommand outputCommands[];
+};
+
+// SSBO 2: Атомарный счетчик видимых вызовов для vkCmdDrawIndexedIndirectCount
+layout(std430, set = 0, binding = 2) buffer DrawCountBuffer {
+    uint drawCount;
+};
+
+// Текстура пирамиды глубин (HZB Mip Chain)
+layout(set = 0, binding = 3) uniform sampler2D u_HzbPyramid;
+
+layout(push_constant) uniform HzbCullConstants {
+    mat4 viewProj;         // 64 байта: Матрица View-Projection для проекции AABB
+    vec4 frustumPlanes[6]; // 96 байт: 6 плоскостей Frustum
+    vec2 screenSize;       // 8 байт: Разрешение экрана в пикселях
+    uint totalChunks;      // 4 байта: Общее количество чанков
+    uint passIndex;        // 4 байта: 0 = Pass 1 (Early Visibility), 1 = Pass 2 (HZB Test), 2 = Single Pass
+    uint isReverseZ;       // 4 байта: 1 = Reverse-Z, 0 = Standard-Z
+    float maxMipLevel;     // 4 байта: Максимальный доступный Mip-уровень пирамиды
+};
+
+bool checkFrustum(vec3 bMin, vec3 bMax) {
+    for (int i = 0; i < 6; ++i) {
+        vec4 plane = frustumPlanes[i];
+        vec3 p = mix(bMin, bMax, greaterThan(plane.xyz, vec3(0.0)));
+        if (dot(plane.xyz, p) + plane.w < 0.0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool testAABBHiz(vec3 bMin, vec3 bMax) {
+    vec3 corners[8] = vec3[8](
+        vec3(bMin.x, bMin.y, bMin.z),
+        vec3(bMax.x, bMin.y, bMin.z),
+        vec3(bMin.x, bMax.y, bMin.z),
+        vec3(bMax.x, bMax.y, bMin.z),
+        vec3(bMin.x, bMin.y, bMax.z),
+        vec3(bMax.x, bMin.y, bMax.z),
+        vec3(bMin.x, bMax.y, bMax.z),
+        vec3(bMax.x, bMax.y, bMax.z)
+    );
+
+    vec3 minNDC = vec3(1e9);
+    vec3 maxNDC = vec3(-1e9);
+    bool anyBehindNear = false;
+
+    for (int i = 0; i < 8; ++i) {
+        vec4 clip = viewProj * vec4(corners[i], 1.0);
+        if (clip.w <= 0.0) {
+            anyBehindNear = true;
+        }
+        vec3 ndc = clip.xyz / max(clip.w, 1e-5);
+        minNDC = min(minNDC, ndc);
+        maxNDC = max(maxNDC, ndc);
+    }
+
+    // Если чанк пересекает плоскость ближнего отсечения камеры — гарантированно видим
+    if (anyBehindNear) {
+        return true;
+    }
+
+    // Перевод NDC в диапазон UV [0, 1]
+    vec2 minUV = clamp(minNDC.xy * 0.5 + 0.5, 0.0, 1.0);
+    vec2 maxUV = clamp(maxNDC.xy * 0.5 + 0.5, 0.0, 1.0);
+
+    // Вычисление подходящего Mip-уровня по размеру проекции в экранных пикселях
+    vec2 sizeInPixels = (maxUV - minUV) * screenSize;
+    float maxDim = max(sizeInPixels.x, sizeInPixels.y);
+    float mip = clamp(ceil(log2(max(maxDim, 1.0))), 0.0, maxMipLevel);
+
+    // Выборка 4 текселей пирамиды HZB вокруг AABB
+    float d0 = textureLod(u_HzbPyramid, minUV, mip).r;
+    float d1 = textureLod(u_HzbPyramid, maxUV, mip).r;
+    float d2 = textureLod(u_HzbPyramid, vec2(minUV.x, maxUV.y), mip).r;
+    float d3 = textureLod(u_HzbPyramid, vec2(maxUV.x, minUV.y), mip).r;
+
+    if (isReverseZ != 0u) {
+        // Reverse-Z: 1.0 = near, 0.0 = far. Консервативный окклюдер = min depth.
+        float hzbDepth = min(min(d0, d1), min(d2, d3));
+        return maxNDC.z >= hzbDepth;
+    } else {
+        // Standard-Z: 0.0 = near, 1.0 = far. Консервативный окклюдер = max depth.
+        float hzbDepth = max(max(d0, d1), max(d2, d3));
+        return minNDC.z <= hzbDepth;
+    }
+}
+
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    bool isVisible = false;
+    ChunkCandidate candidate;
+
+    if (index < totalChunks) {
+        candidate = candidates[index];
+        if ((candidate.flags & 1u) != 0u) {
+            vec3 bMin = candidate.aabbMin.xyz;
+            vec3 bMax = candidate.aabbMax.xyz;
+
+            // 1. Frustum Culling
+            if (checkFrustum(bMin, bMax)) {
+                if (passIndex == 0u) {
+                    // Pass 1: Early Visibility — отрисовываем чанки, видимые в предыдущем кадре
+                    bool wasPrevVisible = (candidate.flags & 2u) != 0u;
+                    isVisible = wasPrevVisible;
+                } else if (passIndex == 1u) {
+                    // Pass 2: HZB Occlusion Test для чанков, не отрисованных в Pass 1
+                    bool wasPrevVisible = (candidate.flags & 2u) != 0u;
+                    if (!wasPrevVisible) {
+                        isVisible = testAABBHiz(bMin, bMax);
+                    }
+                } else {
+                    // Pass 2: Single Pass Frustum + HZB
+                    isVisible = testAABBHiz(bMin, bMax);
+                }
+            }
+        }
+    }
+
+    // --- Wave Intrinsics (VK_KHR_shader_subgroup_arithmetic & ballot) ---
+    uvec4 ballot = subgroupBallot(isVisible);
+    uint localOffset = subgroupBallotExclusiveBitCount(ballot);
+    uint totalWaveCount = subgroupBallotBitCount(ballot);
+
+    uint baseIndex = 0u;
+    if (subgroupElect()) {
+        if (totalWaveCount > 0u) {
+            baseIndex = atomicAdd(drawCount, totalWaveCount);
+        }
+    }
+    baseIndex = subgroupBroadcastFirst(baseIndex);
+
+    if (isVisible) {
+        uint slot = baseIndex + localOffset;
+        outputCommands[slot].indexCount = floatBitsToUint(candidate.aabbMin.w);
+        outputCommands[slot].instanceCount = candidate.instanceCount;
+        outputCommands[slot].firstIndex = floatBitsToUint(candidate.aabbMax.w);
+        outputCommands[slot].vertexOffset = candidate.vertexOffset;
+        outputCommands[slot].firstInstance = candidate.firstInstance;
+    }
+}

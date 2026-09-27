@@ -1,0 +1,174 @@
+package net.caffeinemc.mods.sodium.mixin.core.render.world;
+
+import com.llamalad7.mixinextras.sugar.Local;
+import net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer;
+import net.caffeinemc.mods.sodium.client.render.viewport.ViewportProvider;
+import net.caffeinemc.mods.sodium.client.util.FlawlessFrames;
+import net.caffeinemc.mods.sodium.client.util.FogStorage;
+import net.caffeinemc.mods.sodium.client.world.LevelRendererExtension;
+import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.extract.LevelExtractor;
+import net.minecraft.client.renderer.state.level.LevelRenderState;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.VisibleForDebug;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jspecify.annotations.Nullable;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.function.Consumer;
+
+@Mixin(LevelExtractor.class)
+public class LevelExtractorMixin {
+    @Shadow
+    private @Nullable ClientLevel level;
+
+    @Shadow
+    @Final
+    private LevelRenderState levelRenderState;
+
+    @Unique
+    private SodiumWorldRenderer renderer;
+
+    @Inject(method = "extract", at = @At("HEAD"))
+    private void sodium$setRenderer(DeltaTracker deltaTracker, Camera camera, float deltaPartialTick, CallbackInfo ci) {
+        this.checkRenderer();
+    }
+
+    @Inject(method = "setLevel", at = @At("RETURN"))
+    private void sodium$setRenderer(ClientLevel level, CallbackInfo ci) {
+        this.checkRenderer();
+
+        this.renderer.setLevel(level);
+    }
+
+    @Unique
+    private void checkRenderer() {
+        this.renderer = ((LevelRendererExtension) Minecraft.getInstance().levelRenderer).sodium$getWorldRenderer();
+    }
+
+    @Inject(method = "extractVisibleBlockEntities", at = @At("HEAD"), cancellable = true, require = 1)
+    private void extractVisibleBlockEntities(Camera camera,
+                                             float deltaPartialTick,
+                                             LevelRenderState levelRenderState,
+                                             CallbackInfo ci) {
+        ci.cancel();
+
+        this.renderer.extractBlockEntities(camera, deltaPartialTick, this.level.destructionProgress(), levelRenderState);
+    }
+
+    // Exclusive to NeoForge, allow to fail.
+    @SuppressWarnings("all")
+    @Inject(method = "iterateVisibleBlockEntities", at = @At("HEAD"), cancellable = true, expect = 0, require = 0)
+    public void replaceBlockEntityIteration(Consumer<BlockEntity> blockEntityConsumer, CallbackInfo ci) {
+        ci.cancel();
+
+        this.renderer.iterateVisibleBlockEntities(blockEntityConsumer);
+    }
+
+
+    /**
+     * @reason Replace the debug string
+     * @author JellySquid
+     */
+    @VisibleForDebug
+    @Overwrite
+    public String sectionStatistics() {
+        this.checkRenderer();
+        return this.renderer.getChunksDebugString();
+    }
+
+    /**
+     * @reason Redirect chunk updates to our renderer
+     * @author JellySquid
+     */
+    @Overwrite
+    public void setBlocksDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        this.checkRenderer();
+        this.renderer.scheduleRebuildForBlockArea(minX, minY, minZ, maxX, maxY, maxZ, false);
+    }
+
+    /**
+     * @reason Redirect chunk updates to our renderer
+     * @author JellySquid
+     */
+    @Overwrite
+    public void setSectionDirtyWithNeighbors(int x, int y, int z) {
+        this.checkRenderer();
+        this.renderer.scheduleRebuildForChunks(x - 1, y - 1, z - 1, x + 1, y + 1, z + 1, false);
+    }
+
+    /**
+     * @reason Redirect chunk updates to our renderer
+     * @author JellySquid
+     */
+    @Overwrite
+    private void setBlockDirty(BlockPos pos, boolean important) {
+        this.checkRenderer();
+        this.renderer.scheduleRebuildForBlockArea(pos.getX() - 1,
+                pos.getY() - 1,
+                pos.getZ() - 1,
+                pos.getX() + 1,
+                pos.getY() + 1,
+                pos.getZ() + 1,
+                important);
+    }
+
+    /**
+     * @reason Redirect chunk updates to our renderer
+     * @author JellySquid
+     */
+    @Overwrite
+    private void setSectionDirty(int x, int y, int z, boolean important) {
+        this.checkRenderer();
+        this.renderer.scheduleRebuildForChunk(x, y, z, important);
+    }
+    /**
+     * @reason Redirect the terrain setup phase to our renderer
+     * @author JellySquid
+     */
+    @Inject(method = "extract", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SectionOcclusionGraph;consumeFrustumUpdate()Z"))
+    private void cullTerrain(DeltaTracker deltaTracker,
+                             Camera camera,
+                             float deltaPartialTick,
+                             CallbackInfo ci,
+                             @Local Frustum cullFrustum) {
+        var viewport = ((ViewportProvider) cullFrustum).sodium$createViewport();
+        var updateChunksImmediately = FlawlessFrames.isActive();
+
+        boolean useOcclusionCulling = this.levelRenderState.cameraRenderState.smartCull;
+        this.renderer.setupTerrain(camera,
+                viewport,
+                ((FogStorage) Minecraft.getInstance().gameRenderer).sodium$getFogParameters(),
+                useOcclusionCulling,
+                updateChunksImmediately,
+                ((FrustumAccessor) cullFrustum).sodium$getMatrix());
+    }
+
+    @Redirect(
+            method = "extract",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/extract/LevelExtractor;applyFrustum(Lnet/minecraft/client/renderer/culling/Frustum;)V"))
+    private void sodium$cancel(LevelExtractor instance, Frustum frustum) {
+        // NO-OP
+    }
+
+    /**
+     * @reason Redirect to our renderer
+     * @author JellySquid
+     */
+    @Overwrite
+    public int countRenderedSections() {
+        this.checkRenderer();
+        return this.renderer.getVisibleChunkCount();
+    }
+
+}

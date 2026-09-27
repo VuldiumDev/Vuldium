@@ -1,0 +1,48 @@
+#version 450 core
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+// Выходной буфер векторов движения (R16G16_SFLOAT)
+layout(set = 0, binding = 0, rg16f) uniform writeonly image2D u_VelocityImage;
+
+// Входной буфер аппаратной глубины
+layout(set = 0, binding = 1) uniform sampler2D u_DepthTexture;
+
+// 96 байт Push Constants (гарантированно укладывается в 128-байтный аппаратный лимит)
+layout(push_constant) uniform VelocityConstants {
+    mat4 u_ReprojectionMatrix; // Матрица прямой репроекции (NDC_curr -> Clip_prev)
+    vec4 u_CameraDelta;        // Смещение камеры
+    vec4 u_ScreenParams;       // x: width, y: height, z: 1.0/width, w: 1.0/height
+};
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+    if (pixelCoord.x >= int(u_ScreenParams.x) || pixelCoord.y >= int(u_ScreenParams.y)) {
+        return;
+    }
+
+    float depth = texelFetch(u_DepthTexture, pixelCoord, 0).r;
+
+    // Пиксели неба / фона имеют бесконечную глубину (depth == 1.0 в стандартном Vulkan)
+    if (depth >= 1.0) {
+        imageStore(u_VelocityImage, pixelCoord, vec4(0.0, 0.0, 0.0, 0.0));
+        return;
+    }
+
+    // Вычисление экранного UV и NDC текущего кадра
+    vec2 uv = (vec2(pixelCoord) + 0.5) * u_ScreenParams.zw;
+    vec4 ndcCurrent = vec4(uv.x * 2.0 - 1.0, uv.y * 2.0 - 1.0, depth, 1.0);
+
+    // Одностадийная репроекция за одно матричное умножение
+    vec4 prevClipPos = u_ReprojectionMatrix * ndcCurrent;
+    vec2 prevNdc = prevClipPos.xy / prevClipPos.w;
+
+    // Преобразование NDC в экранное UV-пространство [0.0 .. 1.0]
+    vec2 prevUv = prevNdc * 0.5 + 0.5;
+
+    // Вектор экранной скорости (FSR / DLSS / XeSS стандарт: deltaUV = currentUV - prevUV)
+    vec2 motionVector = uv - prevUv;
+
+    // Запись в R16G16_SFLOAT
+    imageStore(u_VelocityImage, pixelCoord, vec4(motionVector, 0.0, 0.0));
+}

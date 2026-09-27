@@ -1,0 +1,77 @@
+#version 450 core
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+// Входное изображение мира низкого разрешения
+layout(set = 0, binding = 0) uniform sampler2D u_InputColor;
+
+// Выходное масштабированное изображение целевого разрешения
+layout(set = 0, binding = 1, rgba8) uniform writeonly image2D u_OutputColor;
+
+// Константы масштабирования (32 байта)
+layout(push_constant) uniform UpscaleConstants {
+    vec2 u_RenderSize;    // Разрешение рендеринга (width, height)
+    vec2 u_InvRenderSize; // 1.0 / u_RenderSize
+    vec2 u_TargetSize;    // Целевое разрешение экрана (targetWidth, targetHeight)
+    vec2 u_InvTargetSize; // 1.0 / u_TargetSize
+};
+
+// Вычисление воспринимаемой яркости (Luma)
+float getLuma(vec3 c) {
+    return dot(c, vec3(0.2126, 0.7152, 0.0722));
+}
+
+void main() {
+    ivec2 targetCoord = ivec2(gl_GlobalInvocationID.xy);
+    if (targetCoord.x >= int(u_TargetSize.x) || targetCoord.y >= int(u_TargetSize.y)) {
+        return;
+    }
+
+    // Соответствующая точка в исходном буфере рендера
+    vec2 uv = (vec2(targetCoord) + 0.5) * u_InvTargetSize;
+    vec2 pos = uv * u_RenderSize - 0.5;
+    ivec2 baseCoord = ivec2(floor(pos));
+    vec2 f = fract(pos);
+
+    // Сэмплирование окрестности 3x3 для направленной интерполяции
+    vec3 c00 = texelFetch(u_InputColor, clamp(baseCoord + ivec2(-1, -1), ivec2(0), ivec2(u_RenderSize) - 1), 0).rgb;
+    vec3 c10 = texelFetch(u_InputColor, clamp(baseCoord + ivec2( 0, -1), ivec2(0), ivec2(u_RenderSize) - 1), 0).rgb;
+    vec3 c20 = texelFetch(u_InputColor, clamp(baseCoord + ivec2( 1, -1), ivec2(0), ivec2(u_RenderSize) - 1), 0).rgb;
+
+    vec3 c01 = texelFetch(u_InputColor, clamp(baseCoord + ivec2(-1,  0), ivec2(0), ivec2(u_RenderSize) - 1), 0).rgb;
+    vec3 c11 = texelFetch(u_InputColor, clamp(baseCoord + ivec2( 0,  0), ivec2(0), ivec2(u_RenderSize) - 1), 0).rgb;
+    vec3 c21 = texelFetch(u_InputColor, clamp(baseCoord + ivec2( 1,  0), ivec2(0), ivec2(u_RenderSize) - 1), 0).rgb;
+
+    vec3 c02 = texelFetch(u_InputColor, clamp(baseCoord + ivec2(-1,  1), ivec2(0), ivec2(u_RenderSize) - 1), 0).rgb;
+    vec3 c12 = texelFetch(u_InputColor, clamp(baseCoord + ivec2( 0,  1), ivec2(0), ivec2(u_RenderSize) - 1), 0).rgb;
+    vec3 c22 = texelFetch(u_InputColor, clamp(baseCoord + ivec2( 1,  1), ivec2(0), ivec2(u_RenderSize) - 1), 0).rgb;
+
+    // Градиент яркости (Edge detection)
+    float l00 = getLuma(c00); float l10 = getLuma(c10); float l20 = getLuma(c20);
+    float l01 = getLuma(c01); float l11 = getLuma(c11); float l21 = getLuma(c21);
+    float l02 = getLuma(c02); float l12 = getLuma(c12); float l22 = getLuma(c22);
+
+    // Горизонтальный и вертикальный градиенты Собеля
+    float gx = (l20 + 2.0 * l21 + l22) - (l00 + 2.0 * l01 + l02);
+    float gy = (l02 + 2.0 * l12 + l22) - (l00 + 2.0 * l10 + l20);
+
+    float edgeLength = sqrt(gx * gx + gy * gy);
+    vec2 dir = (edgeLength > 0.0001) ? vec2(-gy, gx) / edgeLength : vec2(0.0);
+
+    // Адаптивная интерполяция вдоль границы контраста
+    vec3 col = mix(
+        mix(c11, c21, f.x),
+        mix(c12, c22, f.x),
+        f.y
+    );
+
+    // Смещение выборки вдоль нормали ребра для предотвращения лестничного эффекта (Anti-Aliasing)
+    if (edgeLength > 0.05) {
+        vec2 sampleOffset = dir * u_InvRenderSize * 0.5;
+        vec3 colA = texture(u_InputColor, uv + sampleOffset).rgb;
+        vec3 colB = texture(u_InputColor, uv - sampleOffset).rgb;
+        col = (col + 0.5 * (colA + colB)) * 0.5;
+    }
+
+    imageStore(u_OutputColor, targetCoord, vec4(col, 1.0));
+}

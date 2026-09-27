@@ -1,0 +1,96 @@
+#version 450 core
+#extension GL_EXT_mesh_shader : require
+#extension GL_KHR_shader_subgroup_ballot : enable
+#extension GL_KHR_shader_subgroup_arithmetic : enable
+
+// Workgroup size: 32 threads (1 warp / wavefront)
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+
+// Chunk uniform / globals
+layout(set = 0, binding = 0) uniform Globals {
+    mat4 u_ModelViewMatrix;
+    mat4 u_ProjectionMatrix;
+    mat4 u_ModelViewProjectionMatrix;
+    vec4 u_FrustumPlanes[6];
+    vec3 u_CameraPosition;
+    float u_Time;
+};
+
+// Meshlet descriptor
+struct Meshlet {
+    vec4 sphereBounds; // xyz: center in chunk space, w: radius
+    vec4 coneBounds;   // xyz: cone normal axis, w: cone angle cutoff (cos angle)
+    uint vertexOffset; // offset into vertex buffer
+    uint indexOffset;  // offset into index buffer
+    uint vertexCount;  // <= 64 vertices
+    uint triangleCount;// <= 126 triangles
+};
+
+// SSBO: List of meshlets for the chunk section
+layout(std430, set = 0, binding = 1) readonly buffer MeshletBuffer {
+    Meshlet u_Meshlets[];
+};
+
+// Task payload sent to Mesh Shader
+struct TaskPayload {
+    uint meshletIndices[32];
+};
+taskPayloadSharedEXT TaskPayload s_Payload;
+
+shared uint s_VisibleCount;
+
+bool isVisibleFrustum(vec3 center, float radius) {
+    for (int i = 0; i < 6; ++i) {
+        if (dot(u_FrustumPlanes[i].xyz, center) + u_FrustumPlanes[i].w < -radius) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool isVisibleCone(vec3 center, vec3 coneAxis, float coneCutoff) {
+    vec3 viewDir = normalize(center - u_CameraPosition);
+    return dot(viewDir, coneAxis) >= coneCutoff;
+}
+
+void main() {
+    uint threadId = gl_LocalInvocationID.x;
+    uint meshletId = gl_GlobalInvocationID.x;
+
+    if (threadId == 0) {
+        s_VisibleCount = 0;
+    }
+    barrier();
+
+    bool visible = false;
+    if (meshletId < u_Meshlets.length()) {
+        Meshlet m = u_Meshlets[meshletId];
+        vec3 center = m.sphereBounds.xyz;
+        float radius = m.sphereBounds.w;
+
+        // Frustum Culling
+        if (isVisibleFrustum(center, radius)) {
+            // Normal Cone Backface Culling for closed voxel clusters
+            if (m.coneBounds.w <= 1.0) {
+                visible = isVisibleCone(center, m.coneBounds.xyz, m.coneBounds.w);
+            } else {
+                visible = true; // non-culled cone
+            }
+        }
+    }
+
+    // Compact visible meshlets into task payload
+    uvec4 ballot = subgroupBallot(visible);
+    uint localIndex = subgroupBallotExclusiveBitCount(ballot);
+
+    if (visible) {
+        s_Payload.meshletIndices[localIndex] = meshletId;
+    }
+
+    uint totalVisible = subgroupBallotBitCount(ballot);
+
+    // Emit mesh tasks for visible clusters only
+    if (threadId == 0) {
+        EmitMeshTasksEXT(totalVisible, 1, 1);
+    }
+}

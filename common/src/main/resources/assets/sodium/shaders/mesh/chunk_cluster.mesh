@@ -1,0 +1,127 @@
+#version 450 core
+#extension GL_EXT_mesh_shader : require
+
+// Workgroup size: 32 threads
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+
+// Output: triangles, max 64 vertices, max 126 primitives
+layout(triangles, max_vertices = 64, max_primitives = 126) out;
+
+// Globals
+layout(set = 0, binding = 0) uniform Globals {
+    mat4 u_ModelViewMatrix;
+    mat4 u_ProjectionMatrix;
+    mat4 u_ModelViewProjectionMatrix;
+    vec4 u_FrustumPlanes[6];
+    vec3 u_CameraPosition;
+    float u_Time;
+};
+
+// Meshlet descriptor
+struct Meshlet {
+    vec4 sphereBounds;
+    vec4 coneBounds;
+    uint vertexOffset;
+    uint indexOffset;
+    uint vertexCount;
+    uint triangleCount;
+};
+
+layout(std430, set = 0, binding = 1) readonly buffer MeshletBuffer {
+    Meshlet u_Meshlets[];
+};
+
+// Chunk raw vertex representation (Packed Sodium format: 4 uints per vertex)
+struct ChunkPackedVertex {
+    uvec4 data;
+};
+
+layout(std430, set = 0, binding = 2) readonly buffer VertexBuffer {
+    ChunkPackedVertex u_Vertices[];
+};
+
+// Packed 8-bit local triangle indices
+layout(std430, set = 0, binding = 3) readonly buffer IndexBuffer {
+    uint u_PackedIndices[]; // 4 8-bit indices packed into each uint
+};
+
+// Payload from Task Shader
+struct TaskPayload {
+    uint meshletIndices[32];
+};
+taskPayloadSharedEXT TaskPayload s_Payload;
+
+// Output attributes per vertex
+layout(location = 0) out vec2 v_TexCoord[];
+layout(location = 1) out vec2 v_LightCoord[];
+layout(location = 2) out vec4 v_Color[];
+layout(location = 3) out vec3 v_Normal[];
+layout(location = 4) out vec3 v_ViewPos[];
+
+void main() {
+    uint workgroupIndex = gl_WorkGroupID.x;
+    uint threadId = gl_LocalInvocationID.x;
+
+    // Get the meshlet allocated for this workgroup
+    uint meshletId = s_Payload.meshletIndices[workgroupIndex];
+    Meshlet m = u_Meshlets[meshletId];
+
+    uint vertCount = min(m.vertexCount, 64u);
+    uint primCount = min(m.triangleCount, 126u);
+
+    // Set hardware mesh outputs
+    SetMeshOutputsEXT(vertCount, primCount);
+
+    // 1. Process vertices in parallel (32 threads process 64 vertices, 2 per thread)
+    for (uint i = threadId; i < vertCount; i += 32) {
+        uint globalVertIdx = m.vertexOffset + i;
+        uvec4 raw = u_Vertices[globalVertIdx].data;
+
+        // Unpack vertex positions (X: bits 0..15, Y: bits 16..31, etc.)
+        float posX = float(raw.x & 0xFFFFu) / 32.0;
+        float posY = float((raw.x >> 16u) & 0xFFFFu) / 32.0;
+        float posZ = float(raw.y & 0xFFFFu) / 32.0;
+
+        vec4 modelPos = vec4(posX, posY, posZ, 1.0);
+        gl_MeshVerticesEXT[i].gl_Position = u_ModelViewProjectionMatrix * modelPos;
+
+        // Unpack UV coordinates (raw.z)
+        float u = float(raw.z & 0xFFFFu) / 65535.0;
+        float v = float((raw.z >> 16u) & 0xFFFFu) / 65535.0;
+        v_TexCoord[i] = vec2(u, v);
+
+        // Lightmap (block & sky light: raw.y high bits)
+        float blockLight = float((raw.y >> 16u) & 0xFFu) / 255.0;
+        float skyLight   = float((raw.y >> 24u) & 0xFFu) / 255.0;
+        v_LightCoord[i] = vec2(blockLight, skyLight);
+
+        // Color tint (raw.w: RGBA 8-bit)
+        float r = float(raw.w & 0xFFu) / 255.0;
+        float g = float((raw.w >> 8u) & 0xFFu) / 255.0;
+        float b = float((raw.w >> 16u) & 0xFFu) / 255.0;
+        float a = float((raw.w >> 24u) & 0xFFu) / 255.0;
+        v_Color[i] = vec4(r, g, b, a);
+
+        v_Normal[i] = m.coneBounds.xyz;
+        v_ViewPos[i] = (u_ModelViewMatrix * modelPos).xyz;
+    }
+
+    // 2. Process triangle indices in parallel (32 threads process up to 126 triangles)
+    for (uint i = threadId; i < primCount; i += 32) {
+        uint baseIdx = m.indexOffset + (i * 3u);
+        // Extract 3 local 8-bit indices
+        uint wordIdx0 = baseIdx / 4u;
+        uint byteOffset0 = (baseIdx % 4u) * 8u;
+        uint idx0 = (u_PackedIndices[wordIdx0] >> byteOffset0) & 0xFFu;
+
+        uint wordIdx1 = (baseIdx + 1u) / 4u;
+        uint byteOffset1 = ((baseIdx + 1u) % 4u) * 8u;
+        uint idx1 = (u_PackedIndices[wordIdx1] >> byteOffset1) & 0xFFu;
+
+        uint wordIdx2 = (baseIdx + 2u) / 4u;
+        uint byteOffset2 = ((baseIdx + 2u) % 4u) * 8u;
+        uint idx2 = (u_PackedIndices[wordIdx2] >> byteOffset2) & 0xFFu;
+
+        gl_PrimitiveTriangleIndicesEXT[i] = uvec3(idx0, idx1, idx2);
+    }
+}

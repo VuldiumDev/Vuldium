@@ -1,0 +1,55 @@
+#version 450 core
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+// Изображение после EASU (Target Resolution)
+layout(set = 0, binding = 0) uniform sampler2D u_InputColor;
+
+// Финальное изображение с усилением микроконтраста
+layout(set = 0, binding = 1, rgba8) uniform writeonly image2D u_OutputColor;
+
+layout(push_constant) uniform RcasConstants {
+    vec2 u_TargetSize;    // Разрешение экрана
+    vec2 u_InvTargetSize; // 1.0 / u_TargetSize
+    float u_Sharpness;    // Резкость [0.0 .. 1.0] (обычно 0.2 .. 0.5)
+    float u_Padding;
+};
+
+float getLuma(vec3 c) {
+    return dot(c, vec3(0.2126, 0.7152, 0.0722));
+}
+
+void main() {
+    ivec2 coord = ivec2(gl_GlobalInvocationID.xy);
+    if (coord.x >= int(u_TargetSize.x) || coord.y >= int(u_TargetSize.y)) {
+        return;
+    }
+
+    // Крестообразный шаблон 5 сэмплов (Центр, Верх, Низ, Лево, Право)
+    vec3 c = texelFetch(u_InputColor, coord, 0).rgb;
+    vec3 n = texelFetch(u_InputColor, clamp(coord + ivec2( 0, -1), ivec2(0), ivec2(u_TargetSize) - 1), 0).rgb;
+    vec3 s = texelFetch(u_InputColor, clamp(coord + ivec2( 0,  1), ivec2(0), ivec2(u_TargetSize) - 1), 0).rgb;
+    vec3 w = texelFetch(u_InputColor, clamp(coord + ivec2(-1,  0), ivec2(0), ivec2(u_TargetSize) - 1), 0).rgb;
+    vec3 e = texelFetch(u_InputColor, clamp(coord + ivec2( 1,  0), ivec2(0), ivec2(u_TargetSize) - 1), 0).rgb;
+
+    float lc = getLuma(c);
+    float ln = getLuma(n);
+    float ls = getLuma(s);
+    float lw = getLuma(w);
+    float le = getLuma(e);
+
+    // Мин/макс яркости в окрестности для защиты от перешарпа (Ringing protection)
+    float minLuma = min(lc, min(min(ln, ls), min(lw, le)));
+    float maxLuma = max(lc, max(max(ln, ls), max(lw, le)));
+
+    // Коэффициент адаптивной резкости
+    float nz = 0.25 * (ln + ls + lw + le) - lc;
+    float peak = -0.25 * u_Sharpness;
+    float weight = clamp(nz * peak / (maxLuma - minLuma + 0.0001), -0.2, 0.2);
+
+    // Применение резкости с защитой границ
+    vec3 sharpened = (c + weight * (n + s + w + e)) / (1.0 + 4.0 * weight);
+    sharpened = clamp(sharpened, 0.0, 1.0);
+
+    imageStore(u_OutputColor, coord, vec4(sharpened, 1.0));
+}

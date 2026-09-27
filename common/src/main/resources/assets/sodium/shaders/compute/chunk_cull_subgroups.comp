@@ -1,0 +1,106 @@
+#version 460 core
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_ballot : require
+#extension GL_KHR_shader_subgroup_arithmetic : require
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+// Входная структура секции воксельного чанка (std430, 48 байт)
+struct ChunkCandidate {
+    vec4 aabbMin;       // xyz: Мировые координаты Min AABB, w: indexCount (floatBitsToUint)
+    vec4 aabbMax;       // xyz: Мировые координаты Max AABB, w: firstIndex (floatBitsToUint)
+    int  vertexOffset;  // Базовое смещение вершин в VRAM арене
+    uint instanceCount; // Количество инстансов (1)
+    uint firstInstance; // Базовый инстанс (0)
+    uint flags;         // Битовые флаги (1 = активен, 0 = пуст/выгружен)
+};
+
+// Выходная структура непрямой отрисовки VkDrawIndexedIndirectCommand (std430, 20 байт)
+struct VkDrawIndexedIndirectCommand {
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int  vertexOffset;
+    uint firstInstance;
+};
+
+// SSBO 0: Входной массив кандидатов чанков
+layout(std430, set = 0, binding = 0) readonly buffer CandidatesBuffer {
+    ChunkCandidate candidates[];
+};
+
+// SSBO 1: Выходной буфер уплотненных команд DrawIndexedIndirect
+layout(std430, set = 0, binding = 1) writeonly buffer OutputCommandsBuffer {
+    VkDrawIndexedIndirectCommand outputCommands[];
+};
+
+// SSBO 2: Атомарный счетчик видимых секций для vkCmdDrawIndexedIndirectCount
+layout(std430, set = 0, binding = 2) buffer DrawCountBuffer {
+    uint drawCount;
+};
+
+// Push Constants для передачи параметров усеченной пирамиды видимости
+layout(push_constant) uniform CullConstants {
+    vec4 frustumPlanes[6]; // 6 плоскостей усеченной пирамиды камеры (Ax + By + Cz + D = 0)
+    uint totalChunks;      // Общее количество проверяемых секций чанков
+};
+
+void main() {
+    uint globalIndex = gl_GlobalInvocationID.x;
+    bool isVisible = false;
+    ChunkCandidate candidate;
+
+    if (globalIndex < totalChunks) {
+        candidate = candidates[globalIndex];
+        if ((candidate.flags & 1u) != 0u) {
+            vec3 bMin = candidate.aabbMin.xyz;
+            vec3 bMax = candidate.aabbMax.xyz;
+
+            isVisible = true;
+            // Проверка AABB относительно 6 плоскостей фрустума
+            for (int i = 0; i < 6; ++i) {
+                vec4 plane = frustumPlanes[i];
+                // Выбор P-вершины AABB в направлении нормали плоскости
+                vec3 p = mix(bMin, bMax, greaterThan(plane.xyz, vec3(0.0)));
+                if (dot(plane.xyz, p) + plane.w < 0.0) {
+                    isVisible = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    // =========================================================================
+    // Волновой куллинг без атомарных блокировок (Wave Intrinsics / Subgroups)
+    // =========================================================================
+
+    // 1. Битовая маска видимости всех потоков текущей волны
+    uvec4 ballot = subgroupBallot(isVisible);
+
+    // 2. Локальное смещение потока внутри волны через аппаратный подсчет бит
+    uint localWaveOffset = subgroupBallotExclusiveBitCount(ballot);
+
+    // 3. Общее количество видимых секций всей волны
+    uint totalWaveVisible = subgroupBallotBitCount(ballot);
+
+    // 4. Ровно один поток-лидер волны (subgroupElect) делает единый атомик в память
+    uint baseIndex = 0u;
+    if (subgroupElect()) {
+        if (totalWaveVisible > 0u) {
+            baseIndex = atomicAdd(drawCount, totalWaveVisible);
+        }
+    }
+
+    // 5. Аппаратная широковещательная рассылка baseIndex всем потокам волны
+    baseIndex = subgroupBroadcastFirst(baseIndex);
+
+    // 6. Потоки, прошедшие проверку видимости, записывают команду прямо в VRAM
+    if (isVisible) {
+        uint slot = baseIndex + localWaveOffset;
+        outputCommands[slot].indexCount = floatBitsToUint(candidate.aabbMin.w);
+        outputCommands[slot].instanceCount = candidate.instanceCount;
+        outputCommands[slot].firstIndex = floatBitsToUint(candidate.aabbMax.w);
+        outputCommands[slot].vertexOffset = candidate.vertexOffset;
+        outputCommands[slot].firstInstance = candidate.firstInstance;
+    }
+}
