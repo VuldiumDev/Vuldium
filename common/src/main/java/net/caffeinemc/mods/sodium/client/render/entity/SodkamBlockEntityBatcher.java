@@ -275,7 +275,6 @@ public class SodkamBlockEntityBatcher implements VertexConsumer, AutoCloseable {
         return this;
     }
 
-    @Override
     public VertexConsumer setUv3(float u, float v) {
         return this;
     }

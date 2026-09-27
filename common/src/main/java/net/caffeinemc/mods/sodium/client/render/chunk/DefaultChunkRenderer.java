@@ -1,12 +1,12 @@
 package net.caffeinemc.mods.sodium.client.render.chunk;
 
-import com.mojang.renderpearl.api.pipeline.IndexType;
-import com.mojang.renderpearl.api.buffers.GpuBuffer;
-import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
-import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.blaze3d.IndexType;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.renderpearl.api.textures.FilterMode;
-import com.mojang.renderpearl.api.textures.GpuSampler;
+import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuSampler;
 import net.caffeinemc.mods.sodium.client.SodiumClientMod;
 import net.caffeinemc.mods.sodium.client.gpu.device.batch.MultiDrawBatch;
 import net.caffeinemc.mods.sodium.client.gpu.device.context.DrawContext;
@@ -123,7 +123,7 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
 
         var iterator = renderLists.iterator(renderPass.isTranslucent());
 
-        pass.setPipeline(RenderSystem.getCompiledPipeline(this.activeProgram));
+        pass.setPipeline(this.activeProgram);
         this.drawContext.setContext(pass, this.activeProgram);
 
         if (!useIndexedTessellation && this.sharedIndexBuffer.getBufferObject() != null) {
@@ -132,8 +132,8 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
 
         pass.setUniform("u_Globals", uniformData);
         pass.setUniform("u_SectionTimeInfo", sectionTimeInfo);
-        pass.setUniform("u_LightTex", Minecraft.getInstance().gameRenderer.lightmap(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-        pass.setUniform("u_BlockTex", renderPass.getAtlas(), terrainSampler);
+        pass.bindTexture("u_LightTex", Minecraft.getInstance().gameRenderer.lightmap(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+        pass.bindTexture("u_BlockTex", renderPass.getAtlas(), terrainSampler);
 
         while (iterator.hasNext()) {
             ChunkRenderList renderList = iterator.next();
@@ -172,18 +172,6 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
             float x = (float) ((double) region.getOriginX() - camera.x);
             float y = (float) ((double) region.getOriginY() - camera.y);
             float z = (float) ((double) region.getOriginZ() - camera.z);
-
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                ByteBuffer memory = stack.malloc(PUSH_CONSTANT_RANGE);
-                var addr = MemoryUtil.memAddress(memory);
-                MemoryUtil.memPutFloat(addr, x);
-                MemoryUtil.memPutFloat(addr + 4, y);
-                MemoryUtil.memPutFloat(addr + 8, z);
-                MemoryUtil.memPutInt(addr + 12, Math.toIntExact(System.currentTimeMillis() - region.getCreationTime()));
-                MemoryUtil.memPutInt(addr + 16, region.getId());
-
-                pass.pushConstants(memory);
-            }
 
             batch.draw(this.drawContext);
         }

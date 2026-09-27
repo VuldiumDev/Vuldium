@@ -65,7 +65,7 @@ public abstract class LightDataAccess {
         BlockState state = level.getBlockState(pos);
 
         boolean em = state.emissiveRendering();
-        boolean op = !state.isLightPermeable();
+        boolean op = !state.propagatesSkylightDown();
         boolean fo = state.isSolidRender();
         boolean fc = state.isCollisionShapeFullBlock(level, pos);
 

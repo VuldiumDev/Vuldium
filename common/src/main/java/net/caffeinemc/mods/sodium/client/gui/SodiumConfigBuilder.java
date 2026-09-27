@@ -2,7 +2,7 @@ package net.caffeinemc.mods.sodium.client.gui;
 
 import com.mojang.blaze3d.platform.*;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.blaze3d.textures.FilterMode;
 import net.caffeinemc.mods.sodium.api.config.ConfigEntryPoint;
 import net.caffeinemc.mods.sodium.api.config.ConfigState;
 import net.caffeinemc.mods.sodium.api.config.StorageEventHandler;
@@ -343,16 +343,6 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                 .setFlags(OptionFlag.REQUIRES_GAME_RESTART)
                 .setBinding((value) -> this.vanillaOpts.preferredGraphicsBackend().set(value), () -> this.vanillaOpts.preferredGraphicsBackend().get()));
 
-        if (MacosUtil.IS_MACOS) {
-            platformGroup.addOption(
-                    builder.createBooleanOption(Identifier.parse("sodium:general.mac_fullscreen_menu_visibility"))
-                            .setStorageHandler(this.vanillaStorage)
-                            .setName(Component.translatable("options.macFullscreenMenuVisibility"))
-                            .setTooltip(Component.translatable("options.macFullscreenMenuVisibility.tooltip"))
-                            .setDefaultValue(false)
-                            .setBinding(this.vanillaOpts.macFullscreenMenuVisibility()::set, this.vanillaOpts.macFullscreenMenuVisibility()::get)
-            );
-        }
         generalPage.addOptionGroup(platformGroup);
 
         return generalPage;

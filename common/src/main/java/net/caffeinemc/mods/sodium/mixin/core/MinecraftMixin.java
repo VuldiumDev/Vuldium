@@ -51,7 +51,7 @@ public class MinecraftMixin {
                     target = "Lcom/mojang/renderpearl/api/device/GpuSurface;present()V"
             )
     )
-    private void sodkam$presentWithFrameGeneration(com.mojang.renderpearl.api.device.GpuSurface surface, Operation<Void> original) {
+    private void sodkam$presentWithFrameGeneration(com.mojang.blaze3d.systems.GpuSurface surface, Operation<Void> original) {
         var latencyMode = SodiumClientMod.options().sodkam.lowLatency;
         if (latencyMode != null) {
             var latency = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.latency.SodkamLowLatency.getInstance();

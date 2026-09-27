@@ -102,12 +102,15 @@ public class MutableQuadViewWrapper extends QuadViewWrapper implements QuadEmitt
     }
 
     @Override
+    public MutableQuadViewWrapper diffuseShade(boolean shade) {
+        return this;
+    }
+
     public QuadEmitter itemGlintRenderType(RenderType renderType) {
         this.mutableQuad.setItemGlintRenderType(renderType);
         return this;
     }
 
-    @Override
     public QuadEmitter itemGlintSpecialRenderType(RenderType renderType) {
         this.mutableQuad.setItemGlintSpecialRenderType(renderType);
         return this;
@@ -119,7 +122,6 @@ public class MutableQuadViewWrapper extends QuadViewWrapper implements QuadEmitt
         return this;
     }
 
-    @Override
     public QuadEmitter shadeDirectionOverride(Direction shade) {
         this.mutableQuad.setShadeDirectionOverride(shade);
         return this;

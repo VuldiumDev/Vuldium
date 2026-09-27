@@ -1,11 +1,11 @@
 package net.caffeinemc.mods.sodium.client.gpu.device.vulkan;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.renderpearl.api.device.GpuDevice;
-import com.mojang.renderpearl.backend.api.GpuDeviceBackend;
-import com.mojang.renderpearl.backend.vulkan.VulkanDevice;
-import com.mojang.renderpearl.backend.vulkan.VulkanQueue;
-import com.mojang.renderpearl.backend.vulkan.VulkanRenderPass;
+import com.mojang.blaze3d.systems.GpuDevice;
+import com.mojang.blaze3d.systems.GpuDeviceBackend;
+import com.mojang.blaze3d.vulkan.VulkanDevice;
+import com.mojang.blaze3d.vulkan.VulkanQueue;
+import com.mojang.blaze3d.vulkan.VulkanRenderPass;
 import net.caffeinemc.mods.sodium.mixin.core.GpuDeviceAccessor;
 import org.lwjgl.vulkan.VkCommandBuffer;
 import org.lwjgl.vulkan.VkDevice;

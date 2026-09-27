@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.feature.ItemFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(ItemFeatureRenderer.class)
@@ -29,4 +30,9 @@ public interface ItemFeatureRendererAccessor {
     static PoseStack.Pose fabric_computeFoilDecalPose(ItemDisplayContext type, PoseStack.Pose pose) {
 		throw new AssertionError();
 	}
+
+    @Accessor("SPECIAL_FOIL_TEXTURE_SCALE")
+    static float fabric_getSpecialFoilTextureScale() {
+        throw new AssertionError();
+    }
 }

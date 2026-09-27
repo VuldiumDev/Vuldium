@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.sodium.client.render.chunk.vulkan.pacing;
 
-import com.mojang.renderpearl.api.device.GpuSurface;
+import com.mojang.blaze3d.systems.GpuSurface;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;

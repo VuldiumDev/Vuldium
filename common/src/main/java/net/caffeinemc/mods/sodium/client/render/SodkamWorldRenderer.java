@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.sodium.client.render;
 
-import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.blaze3d.systems.RenderPass;
 import net.caffeinemc.mods.sodium.client.gpu.device.vulkan.SodkamDeviceContext;
 import net.caffeinemc.mods.sodium.client.gpu.device.vulkan.SodkamDeviceContextImpl;
 import net.caffeinemc.mods.sodium.client.gpu.device.vulkan.VulkanContextBridge;

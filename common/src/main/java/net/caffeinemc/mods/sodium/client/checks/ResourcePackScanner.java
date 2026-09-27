@@ -175,7 +175,7 @@ public class ResourcePackScanner {
     }
 
     private static boolean isExternalResourcePack(PackResources pack) {
-        return pack instanceof PathPackResources || pack instanceof FilePackResources || pack instanceof OverlayedPackResources;
+        return pack instanceof PathPackResources || pack instanceof FilePackResources || pack instanceof CompositePackResources;
     }
 
     private static String getResourcePackName(PackResources pack) {

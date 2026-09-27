@@ -20,20 +20,22 @@ public class CameraMixin {
     private void editMatrix(CallbackInfoReturnable<Matrix4f> cir) {
         var x = cir.getReturnValue();
 
-        var gameRenderer = Minecraft.getInstance().gameRenderer;
-        var gameRendererAccessor = ((GameRendererAccessor) Minecraft.getInstance().gameRenderer);
         var player = Minecraft.getInstance().player;
+        if (player == null) {
+            cir.setReturnValue(x);
+            return;
+        }
 
-        float worldPartialTicks = gameRenderer.gameRenderState().levelRenderState.worldPartialTicks;
-        float screenEffectScale = gameRenderer.gameRenderState().optionsRenderState.screenEffectScale;
-        float portalIntensity = gameRenderer.gameRenderState().levelRenderState.playerRenderState.portalEffectIntensity;
-        float nauseaIntensity = gameRenderer.gameRenderState().levelRenderState.playerRenderState.nauseaEffectIntensity;
+        float worldPartialTicks = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        float screenEffectScale = Minecraft.getInstance().options.screenEffectScale().get().floatValue();
+        float portalIntensity = Mth.lerp(worldPartialTicks, player.oPortalEffectIntensity, player.portalEffectIntensity);
+        float nauseaIntensity = player.hasEffect(MobEffects.NAUSEA) ? 1.0F : 0.0F;
         float spinningEffectIntensity = Math.max(portalIntensity, nauseaIntensity) * screenEffectScale * screenEffectScale;
         if (spinningEffectIntensity > 0.0F) {
             float skew = 5.0F / (spinningEffectIntensity * spinningEffectIntensity + 5.0F) - spinningEffectIntensity * 0.04F;
             skew *= skew;
             Vector3f axis = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
-            float angle = gameRenderer.gameRenderState().levelRenderState.playerRenderState.spinningEffectAngle * ((float)Math.PI / 180F);
+            float angle = 0.0F;
             x.rotate(angle, axis);
             x.scale(1.0F / skew, 1.0F, 1.0F);
             x.rotate(-angle, axis);

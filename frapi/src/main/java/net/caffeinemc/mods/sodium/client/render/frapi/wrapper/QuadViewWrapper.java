@@ -137,11 +137,14 @@ public class QuadViewWrapper implements QuadView {
     }
 
     @Override
+    public boolean diffuseShade() {
+        return true;
+    }
+
     public RenderType itemGlintRenderType() {
         return this.quad.itemGlintRenderType();
     }
 
-    @Override
     public RenderType itemGlintSpecialRenderType() {
         return this.quad.itemGlintSpecialRenderType();
     }
@@ -151,7 +154,6 @@ public class QuadViewWrapper implements QuadView {
         return this.quad.emissive();
     }
 
-    @Override
     public @Nullable Direction shadeDirectionOverride() {
         return this.quad.shadeDirectionOverride();
     }

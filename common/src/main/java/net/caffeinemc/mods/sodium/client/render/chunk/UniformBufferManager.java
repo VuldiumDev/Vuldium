@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.sodium.client.render.chunk;
 
-import com.mojang.renderpearl.api.buffers.GpuBuffer;
-import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.caffeinemc.mods.sodium.client.SodiumClientMod;
@@ -13,9 +13,7 @@ import net.caffeinemc.mods.sodium.mixin.core.render.texture.TextureAtlasAccessor
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.DynamicGpuDataStorage;
-import net.minecraft.client.renderer.DynamicGpuDataStorageMapped;
-import net.minecraft.client.renderer.DynamicGpuDataStorageNonMapped;
+import net.minecraft.client.renderer.DynamicUniformStorage;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.NonNull;
@@ -29,7 +27,7 @@ public class UniformBufferManager {
     private static final int INITIAL_GLOBAL_UNIFORM_CAPACITY = 8;
     private static final int TIME_BUFFER_SIZE_PER_REGION = RenderRegion.REGION_SIZE * Integer.BYTES;
 
-    private final DynamicGpuDataStorage<GlobalUniforms> uniformStorage;
+    private final DynamicUniformStorage<GlobalUniforms> uniformStorage;
     private GpuBufferSlice uniformData;
 
     private GpuBuffer sectionTimeInfo;
@@ -46,7 +44,7 @@ public class UniformBufferManager {
 
         int maxRegions = regionsX * regionsY * regionsX * 2;
 
-        this.uniformStorage = new DynamicGpuDataStorageMapped<>("Sodium terrain uniforms", GLOBAL_UNIFORM_SIZE, GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_UNIFORM, INITIAL_GLOBAL_UNIFORM_CAPACITY);
+        this.uniformStorage = new DynamicUniformStorage<>("Sodium terrain uniforms", GLOBAL_UNIFORM_SIZE, INITIAL_GLOBAL_UNIFORM_CAPACITY);
 
         this.sectionTimeInfo = RenderSystem.getDevice().createBuffer(() -> "Section time info",
                 GpuBuffer.USAGE_UNIFORM_TEXEL_BUFFER | GpuBuffer.USAGE_COPY_SRC | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_MAP_WRITE,
@@ -110,7 +108,7 @@ public class UniformBufferManager {
                 .getTextureManager()
                 .getTexture(TextureAtlas.LOCATION_BLOCKS);
 
-        this.uniformData = this.uniformStorage.writeData(new GlobalUniforms(
+        this.uniformData = this.uniformStorage.writeUniform(new GlobalUniforms(
                 new Matrix4f(matrices.projection()),
                 new Matrix4f(matrices.modelView()),
                 fogParameters.red(), fogParameters.green(), fogParameters.blue(), fogParameters.alpha(),
@@ -200,7 +198,7 @@ public class UniformBufferManager {
             float subTexelOffsetY,
             float fadeInFactor,
             int useRgbaTextureFiltering
-    ) implements DynamicGpuDataStorage.DynamicGpuData {
+    ) implements DynamicUniformStorage.DynamicUniform {
         @Override
         public void write(@NonNull ByteBuffer byteBuffer) {
             Std140Builder.intoBuffer(byteBuffer)

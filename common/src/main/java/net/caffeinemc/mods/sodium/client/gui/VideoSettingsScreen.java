@@ -425,7 +425,7 @@ public class VideoSettingsScreen extends Screen implements ScreenPromptable, Scr
     }
 
     private void openDonationPage() {
-        Blaze3D.openUri(URI.create("https://caffeinemc.net/donate"));
+        net.minecraft.util.Util.getPlatform().openUri(URI.create("https://caffeinemc.net/donate"));
     }
 
     @Override

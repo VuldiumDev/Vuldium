@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.sodium.mixin.workarounds.context_creation;
 
-import com.mojang.renderpearl.backend.opengl.GlSurface;
+import com.mojang.blaze3d.opengl.GlSurface;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.caffeinemc.mods.sodium.client.compatibility.checks.ModuleScanner;
 import net.caffeinemc.mods.sodium.client.compatibility.checks.PostLaunchChecks;
@@ -8,9 +8,8 @@ import net.caffeinemc.mods.sodium.client.compatibility.environment.GlContextInfo
 import net.caffeinemc.mods.sodium.client.platform.NativeWindowHandle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Util;
+import org.lwjgl.glfw.GLFWNativeWin32;
 import org.lwjgl.opengl.WGL;
-import org.lwjgl.sdl.SDLProperties;
-import org.lwjgl.sdl.SDLVideo;
 import org.lwjgl.system.MemoryUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +43,7 @@ public class GlSurfaceMixin {
         LOGGER.info(String.valueOf(Thread.currentThread()));
         NativeWindowHandle handle = () -> {
             var window = Minecraft.getInstance().getWindow();
-            return SDLProperties.SDL_GetPointerProperty(SDLVideo.SDL_GetWindowProperties(window.handle()), SDLVideo.SDL_PROP_WINDOW_WIN32_HWND_POINTER, 0L);
+            return GLFWNativeWin32.glfwGetWin32Window(window.handle());
         };
 
         if (RenderSystem.getDevice().getDeviceInfo().backendName().contains("OpenGL")) {
@@ -54,7 +53,6 @@ public class GlSurfaceMixin {
             LOGGER.info("OpenGL Version: {}", context.version());
             PostLaunchChecks.onContextInitialized(handle, context);
         }
-
 
         ModuleScanner.checkModules(handle);
     }
@@ -71,7 +69,6 @@ public class GlSurfaceMixin {
         if (wglPrevContext == MemoryUtil.NULL) {
             // There is no prior recorded context. Record it.
             wglPrevContext = WGL.wglGetCurrentContext(null);
-
             return;
         }
 
@@ -94,7 +91,7 @@ public class GlSurfaceMixin {
         // nothing problematic was just installed.
         ModuleScanner.checkModules(() -> {
             var window = Minecraft.getInstance().getWindow();
-            return SDLProperties.SDL_GetPointerProperty(SDLVideo.SDL_GetWindowProperties(window.handle()), SDLVideo.SDL_PROP_WINDOW_WIN32_HWND_POINTER, 0L);
+            return GLFWNativeWin32.glfwGetWin32Window(window.handle());
         });
     }
 }

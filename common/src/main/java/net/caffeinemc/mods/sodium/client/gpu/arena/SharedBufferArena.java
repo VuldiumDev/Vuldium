@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.sodium.client.gpu.arena;
 
-import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.GpuBuffer;
 
 import java.util.ArrayList;
 import java.util.List;

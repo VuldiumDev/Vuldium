@@ -23,10 +23,10 @@ import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.rendertype.RenderType;
 
 enum ItemGlintSpecialRenderType {
-	CUTOUT(Sheets.cutoutItemGlintSpecialSheet()),
-	TRANSLUCENT(Sheets.translucentItemGlintSpecialSheet()),
-	CUTOUT_BLOCK(Sheets.cutoutBlockItemGlintSpecialSheet()),
-	TRANSLUCENT_BLOCK(Sheets.translucentBlockItemGlintSpecialSheet());
+	CUTOUT(Sheets.cutoutItemSheet()),
+	TRANSLUCENT(Sheets.translucentItemSheet()),
+	CUTOUT_BLOCK(Sheets.cutoutBlockItemSheet()),
+	TRANSLUCENT_BLOCK(Sheets.translucentBlockItemSheet());
 
 	static final RenderType[] RENDER_TYPES = Arrays.stream(ItemGlintSpecialRenderType.values()).map(t -> t.renderType).toArray(RenderType[]::new);
 	static final Map<RenderType, ItemGlintSpecialRenderType> RENDER_TYPE_TO_ENUM = Map.of(

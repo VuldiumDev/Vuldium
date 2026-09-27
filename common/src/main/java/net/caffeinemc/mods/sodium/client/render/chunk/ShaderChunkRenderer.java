@@ -1,10 +1,10 @@
 package net.caffeinemc.mods.sodium.client.render.chunk;
 
-import com.mojang.renderpearl.api.GpuFormat;
-import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
-import com.mojang.renderpearl.api.pipeline.UniformType;
-import com.mojang.renderpearl.api.textures.GpuSampler;
-import com.mojang.renderpearl.api.vertex.VertexFormat;
+import com.mojang.blaze3d.GpuFormat;
+import com.mojang.blaze3d.PrimitiveTopology;
+import com.mojang.blaze3d.shaders.UniformType;
+import com.mojang.blaze3d.textures.GpuSampler;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.caffeinemc.mods.sodium.client.render.chunk.terrain.TerrainRenderPass;
 import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.ChunkVertexType;
@@ -15,11 +15,11 @@ import net.minecraft.resources.Identifier;
 
 import java.util.*;
 
-import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
-import com.mojang.renderpearl.api.pipeline.BlendFunction;
-import com.mojang.renderpearl.api.pipeline.ColorTargetState;
-import com.mojang.renderpearl.api.pipeline.DepthStencilState;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.BindGroupLayout;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import org.jspecify.annotations.Nullable;
 
 
@@ -27,11 +27,11 @@ public abstract class ShaderChunkRenderer implements ChunkRenderer {
     private static final Map<TerrainRenderPass, RenderPipeline> programs = new Object2ObjectOpenHashMap<>();
     private static final Map<TerrainRenderPass, OitPipelineSet> oitPrograms = new Object2ObjectOpenHashMap<>();
     public static final BindGroupLayout BIND_GROUP = BindGroupLayout.builder()
-            .withUniform("u_BlockTex", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withSampler("u_BlockTex")
             .withUniform("u_Globals", UniformType.UNIFORM_BUFFER)
             .withUniform("u_SectionTimeInfo", UniformType.TEXEL_BUFFER, GpuFormat.R32_SINT).build();
     public static final BindGroupLayout LIGHT_GROUP = BindGroupLayout.builder()
-            .withUniform("u_LightTex", UniformType.COMBINED_IMAGE_SAMPLER)
+            .withSampler("u_LightTex")
             .build();
 
     protected final ChunkVertexType vertexType;
@@ -70,7 +70,6 @@ public abstract class ShaderChunkRenderer implements ChunkRenderer {
         var builder = RenderPipeline.builder()
                 .withBindGroupLayout(BIND_GROUP)
                 .withBindGroupLayout(LIGHT_GROUP)
-                .withPushConstantSize(DefaultChunkRenderer.PUSH_CONSTANT_RANGE)
                 .withLocation(Identifier.fromNamespaceAndPath("sodium", pass.getPipeline().getLocation().getPath()))
                 .withCull(true)
                 .withVertexShader(Identifier.fromNamespaceAndPath("sodium", "blocks/block_layer_opaque"))
@@ -103,7 +102,6 @@ public abstract class ShaderChunkRenderer implements ChunkRenderer {
 
         var builder = RenderPipeline.builder()
                 .withBindGroupLayout(BIND_GROUP)
-                .withPushConstantSize(DefaultChunkRenderer.PUSH_CONSTANT_RANGE)
                 .withLocation(Identifier.fromNamespaceAndPath("sodium", pass.getPipeline().getLocation().getPath()))
                 .withCull(true)
                 .withVertexShader(Identifier.fromNamespaceAndPath("sodium", "blocks/block_layer_opaque"))

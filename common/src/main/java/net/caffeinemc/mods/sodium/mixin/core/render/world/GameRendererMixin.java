@@ -5,9 +5,9 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.renderpearl.api.GpuFormat;
-import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
-import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.blaze3d.GpuFormat;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.systems.CommandEncoder;
 import net.caffeinemc.mods.sodium.client.SodiumClientMod;
 import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.SodkamBlitPass;
 import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.UpscaleQuality;
@@ -144,8 +144,8 @@ public class GameRendererMixin implements GameRendererStorage {
                     "vuldium_world",
                     renderWidth,
                     renderHeight,
-                    colorFmt,
-                    depthFmt
+                    true,
+                    colorFmt
             );
         } else if (this.sodkam$worldTarget.width != renderWidth || this.sodkam$worldTarget.height != renderHeight) {
             this.sodkam$worldTarget.resize(renderWidth, renderHeight);

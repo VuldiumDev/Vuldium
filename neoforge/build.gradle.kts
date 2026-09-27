@@ -149,7 +149,12 @@ sourceSets {
 
 neoForge {
     version = BuildConfig.NEOFORGE_VERSION
-    accessTransformers.from(file("src/mod/resources/META-INF/accesstransformer.cfg"))
+    val atFile = if (BuildConfig.MINECRAFT_VERSION == "26.3") {
+        file("src/mod/resources/META-INF/accesstransformer.cfg")
+    } else {
+        file("src/mod/resources/META-INF/accesstransformer-pre26.3.cfg")
+    }
+    accessTransformers.from(atFile)
     validateAccessTransformers = true
 
     runs {

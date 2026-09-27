@@ -101,7 +101,6 @@ public class ChunkVertexConsumer implements VertexConsumer {
         return this.potentiallyEndVertex();
     }
 
-    @Override
     public VertexConsumer setUv3(float u, float v) {
         return this.potentiallyEndVertex();
     }

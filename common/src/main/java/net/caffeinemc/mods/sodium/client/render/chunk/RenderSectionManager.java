@@ -596,13 +596,7 @@ public class RenderSectionManager {
         this.regions.uploadResults(outputs, uniforms);
         var uploadDuration = System.nanoTime() - uploadStart;
 
-        // just replicating what Vanilla does here...
-        for (var output : outputs) {
-            if (output instanceof ChunkBuildOutput buildOutput) {
-                Minecraft.getInstance().levelRenderer.removeTransientBlocksInSection(
-                        buildOutput.section.getPosition().asLong(), buildOutput.chunkCaptureTime);
-            }
-        }
+        // transient blocks cleanup (26.3+) - not present in 26.2
 
         // insert and update the upload duration estimator with the total upload size,
         // since we don't know which task took how long and the time it takes to upload is not independent between tasks

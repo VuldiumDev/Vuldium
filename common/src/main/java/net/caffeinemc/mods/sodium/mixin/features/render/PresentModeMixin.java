@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.sodium.mixin.features.render;
 
-import com.mojang.renderpearl.api.device.GpuSurface;
+import com.mojang.blaze3d.systems.GpuSurface;
 import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.pacing.SodkamFramePacing;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

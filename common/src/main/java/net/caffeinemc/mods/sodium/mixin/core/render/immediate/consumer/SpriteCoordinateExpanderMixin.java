@@ -1,13 +1,12 @@
 package net.caffeinemc.mods.sodium.mixin.core.render.immediate.consumer;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.renderpearl.api.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.caffeinemc.mods.sodium.api.vertex.attributes.common.TextureAttribute;
 import net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter;
 import net.caffeinemc.mods.sodium.client.render.vertex.VertexFormatOffsetCache;
 import net.minecraft.client.renderer.SpriteCoordinateExpander;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.UvMapping;
 import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,12 +24,12 @@ public class SpriteCoordinateExpanderMixin implements VertexBufferWriter {
 
     @Shadow
     @Final
-    private UvMapping mapping;
+    private TextureAtlasSprite sprite;
     @Unique
     private boolean canUseIntrinsics;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void onInit(VertexConsumer delegate, UvMapping mapping, CallbackInfo ci) {
+    private void onInit(VertexConsumer delegate, TextureAtlasSprite sprite, CallbackInfo ci) {
         this.canUseIntrinsics = VertexBufferWriter.tryOf(this.delegate) != null;
     }
 
@@ -41,7 +40,7 @@ public class SpriteCoordinateExpanderMixin implements VertexBufferWriter {
 
     @Override
     public void push(MemoryStack stack, final long ptr, int count, VertexFormat format) {
-        transform(ptr, count, format, this.mapping);
+        transform(ptr, count, format, this.sprite);
 
         VertexBufferWriter.of(this.delegate)
                 .push(stack, ptr, count, format);
@@ -54,11 +53,11 @@ public class SpriteCoordinateExpanderMixin implements VertexBufferWriter {
      * @param ptr    The buffer of vertices to transform
      * @param count  The number of vertices to transform
      * @param format The format of the vertices
-     * @param mapping The UV mapping
+     * @param sprite The sprite
      */
     @Unique
     private static void transform(long ptr, int count, VertexFormat format,
-                                  UvMapping mapping) {
+                                  TextureAtlasSprite sprite) {
         long stride = format.getVertexSize();
 
         var cache = VertexFormatOffsetCache.getInstance().getCachedOffsets(format);
@@ -71,8 +70,8 @@ public class SpriteCoordinateExpanderMixin implements VertexBufferWriter {
             float v = TextureAttribute.getV(ptr + offsetUV);
 
             // The texture coordinates in absolute space on the sprite sheet
-            float ut = mapping.getU(u);
-            float vt = mapping.getV(v);
+            float ut = sprite.getU(u);
+            float vt = sprite.getV(v);
 
             TextureAttribute.put(ptr + offsetUV, ut, vt);
 

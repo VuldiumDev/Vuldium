@@ -2,13 +2,13 @@ package net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.renderpearl.api.commands.CommandEncoder;
-import com.mojang.renderpearl.api.commands.RenderPass;
-import com.mojang.renderpearl.api.pipeline.ColorTargetState;
-import com.mojang.renderpearl.api.pipeline.CompiledRenderPipeline;
-import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
-import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.CompiledRenderPipeline;
+import com.mojang.blaze3d.PrimitiveTopology;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.textures.FilterMode;
 import net.caffeinemc.mods.sodium.client.SodiumClientMod;
 import net.caffeinemc.mods.sodium.client.gpu.device.vulkan.capabilities.UpscalerType;
 import net.minecraft.client.renderer.BindGroupLayouts;
@@ -59,7 +59,6 @@ public class SodkamBlitPass {
             return;
         }
 
-        CompiledRenderPipeline compiled = null;
         var opts = SodiumClientMod.options().sodkam;
         RenderPipeline targetPipeline = switch (opts.upscaler) {
             case DLSS -> DLSS_PIPELINE;
@@ -67,27 +66,14 @@ public class SodkamBlitPass {
             default -> FSR_PIPELINE;
         };
 
-        try {
-            compiled = RenderSystem.getCompiledPipeline(targetPipeline);
-        } catch (Throwable ignored) {
-        }
-
-        if (compiled == null) {
-            try {
-                compiled = RenderSystem.getCompiledPipeline(RenderPipelines.TRACY_BLIT);
-            } catch (Exception e) {
-                return;
-            }
-        }
-
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
         try (RenderPass pass = encoder.createRenderPass(
                 () -> "Vuldium Upscale Blit",
                 dst.getColorTextureView(),
                 Optional.empty())) {
             RenderSystem.bindDefaultUniforms(pass);
-            pass.setPipeline(compiled);
-            pass.setUniform("InSampler", src.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
+            pass.setPipeline(targetPipeline);
+            pass.bindTexture("InSampler", src.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
             pass.draw(3, 1, 0, 0);
         }
     }

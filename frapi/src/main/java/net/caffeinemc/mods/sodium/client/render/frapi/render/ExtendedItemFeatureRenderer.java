@@ -125,7 +125,7 @@ public class ExtendedItemFeatureRenderer extends RenderTypeFeatureRenderer<Exten
                 foilDecalPose = ItemFeatureRendererAccessor.fabric_computeFoilDecalPose(submit.displayContext(), submit.pose());
             }
 
-            vertexConsumer = new SheetedDecalTextureGenerator(vertexConsumer, foilDecalPose, ItemFeatureRenderer.SPECIAL_FOIL_TEXTURE_SCALE);
+            vertexConsumer = new SheetedDecalTextureGenerator(vertexConsumer, foilDecalPose, ItemFeatureRendererAccessor.fabric_getSpecialFoilTextureScale());
 		}
 
         quad.buffer(submit.overlayCoords(), submit.pose(), vertexConsumer);
