@@ -1,6 +1,5 @@
 package net.caffeinemc.mods.sodium.client.gpu.device.batch;
 
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import net.caffeinemc.mods.sodium.api.memory.MemoryIntrinsics;
 import net.caffeinemc.mods.sodium.client.gpu.device.context.DrawContext;
 import net.caffeinemc.mods.sodium.client.gpu.device.context.VKIndirectContext;
@@ -16,28 +15,32 @@ public final class VKIndirectDrawBatch extends MultiDrawBatch {
         this.pCommands = MemoryUtil.nmemAlignedAlloc(32, (long) VkDrawIndexedIndirectCommand.SIZEOF * capacity);
         MemoryUtil.memSet(this.pCommands, 0x0, (long) VkDrawIndexedIndirectCommand.SIZEOF * capacity);
         for (int i = 0; i < capacity; i++) {
-            MemoryIntrinsics.putInt(this.pCommands + (i * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.INSTANCECOUNT, 1);
-            MemoryIntrinsics.putInt(this.pCommands + (i * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.FIRSTINSTANCE, 0);
+            MemoryIntrinsics.putInt(this.pCommands + ((long) i * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.INSTANCECOUNT, 1);
+            MemoryIntrinsics.putInt(this.pCommands + ((long) i * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.FIRSTINSTANCE, 0);
         }
     }
 
     @Override
     public void put(int size, int elementCount, int baseVertex, long elementOffset) {
-        MemoryIntrinsics.putInt(this.pCommands + (size * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.INDEXCOUNT, elementCount);
-        MemoryIntrinsics.putInt(this.pCommands + (size * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.VERTEXOFFSET, UInt32.uncheckedDowncast(baseVertex));
-        MemoryIntrinsics.putInt(this.pCommands + (size * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.FIRSTINDEX, UInt32.uncheckedDowncast(elementOffset));
+        MemoryIntrinsics.putInt(this.pCommands + ((long) size * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.INDEXCOUNT, elementCount);
+        MemoryIntrinsics.putInt(this.pCommands + ((long) size * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.VERTEXOFFSET, UInt32.uncheckedDowncast(baseVertex));
+        MemoryIntrinsics.putInt(this.pCommands + ((long) size * VkDrawIndexedIndirectCommand.SIZEOF) + VkDrawIndexedIndirectCommand.FIRSTINDEX, UInt32.uncheckedDowncast(elementOffset));
 
         this.updateMaxElementCount(elementCount);
     }
 
     @Override
     public void draw(DrawContext dc) {
-        VKIndirectContext context = (VKIndirectContext) dc;
-        var byteSize = this.size * VkDrawIndexedIndirectCommand.SIZEOF;
-
-        GpuBufferSlice commands = context.mappedView.slice().slice(offset, byteSize);
-
-        context.getPass().drawIndexedIndirect(commands, this.size);
+        if (this.size <= 0) {
+            return;
+        }
+        for (int i = 0; i < this.size; i++) {
+            long cmd = this.pCommands + ((long) i * VkDrawIndexedIndirectCommand.SIZEOF);
+            int indexCount = MemoryIntrinsics.getInt(cmd + VkDrawIndexedIndirectCommand.INDEXCOUNT);
+            int vertexOffset = MemoryIntrinsics.getInt(cmd + VkDrawIndexedIndirectCommand.VERTEXOFFSET);
+            int firstIndex = MemoryIntrinsics.getInt(cmd + VkDrawIndexedIndirectCommand.FIRSTINDEX);
+            dc.getPass().drawIndexed(indexCount, 1, firstIndex, vertexOffset);
+        }
     }
 
     @Override
@@ -48,7 +51,6 @@ public final class VKIndirectDrawBatch extends MultiDrawBatch {
         var offset = context.addCommand(byteSize);
 
         MemoryUtil.memCopy(this.pCommands, MemoryUtil.memAddress(context.mappedView.data()) + ((long) offset), byteSize);
-
         this.offset = offset;
     }
 

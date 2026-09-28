@@ -251,7 +251,7 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                                 .setBinding(value -> {
                                     var monitor = this.getMonitor();
                                     if (monitor != null) {
-                                        this.window.setPreferredFullscreenVideoMode(0 == value ? Optional.empty() : Optional.of(monitor.mode(value - 1)));
+                                        this.window.setPreferredFullscreenVideoMode(0 == value ? Optional.empty() : Optional.of(monitor.getMode(value - 1)));
                                     }
                                 }, () -> {
                                     var monitor = this.getMonitor();
@@ -259,13 +259,13 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                                         return 0;
                                     } else {
                                         Optional<VideoMode> optional = this.window.getPreferredFullscreenVideoMode();
-                                        return optional.map((videoMode) -> monitor.indexOfMode(videoMode) + 1).orElse(0);
+                                        return (Integer) optional.map((videoMode) -> monitor.getVideoModeIndex(videoMode) + 1).orElse(0);
                                     }
                                 })
                                 .setEnabledProvider(
                                         (state) -> {
                                             var monitor = this.getMonitor();
-                                            if (monitor == null || monitor.modeCount() <= 0) {
+                                            if (monitor == null || monitor.getModeCount() <= 0) {
                                                 return false;
                                             }
                                             var fullscreenMode = state.readEnumOption(Identifier.parse("sodium:general.fullscreen_mode"), FullscreenMode.class);
@@ -280,7 +280,7 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                                     if (this.vanillaStorage != null) {
                                         this.vanillaStorage.afterSave();
                                     }
-                                    Minecraft.getInstance().invalidateSurfaceConfiguration();
+                                    this.window.updateVsync(this.vanillaOpts.enableVsync().get());
                                 })
                                 .setName(Component.translatable("options.vsync"))
                                 .setTooltip(Component.translatable("sodium.options.v_sync.tooltip"))
@@ -288,7 +288,7 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                                 .setBinding(
                                         value -> {
                                             this.vanillaOpts.enableVsync().set(value);
-                                            Minecraft.getInstance().invalidateSurfaceConfiguration();
+                                            this.window.updateVsync(value);
                                         },
                                         this.vanillaOpts.enableVsync()::get
                                 )
@@ -324,26 +324,7 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                 )
         );
 
-        var platformGroup = builder.createOptionGroup().addOption(builder.createEnumOption(Identifier.fromNamespaceAndPath("sodium", "general.graphics_api"),
-                        PreferredGraphicsApi.class)
-                .setStorageHandler(this.vanillaStorage)
-                .setName(Component.translatable("options.graphicsApi"))
-                .setTooltip(i -> {
-                    if (i == PreferredGraphicsApi.VULKAN) {
-                        return Component.translatable("options.graphicsApi.tooltip.vulkan");
-                    } else {
-                        return Component.translatable("options.graphicsApi.tooltip");
-                    }
-                })
-                .setElementNameProvider(EnumOptionBuilder.nameProviderFrom(
-                        Component.translatable("options.graphicsApi.default"),
-                        Component.translatable("options.graphicsApi.opengl"),
-                        Component.literal("Prefer Vulkan")))
-                .setDefaultValue(PreferredGraphicsApi.DEFAULT)
-                .setFlags(OptionFlag.REQUIRES_GAME_RESTART)
-                .setBinding((value) -> this.vanillaOpts.preferredGraphicsBackend().set(value), () -> this.vanillaOpts.preferredGraphicsBackend().get()));
 
-        generalPage.addOptionGroup(platformGroup);
 
         return generalPage;
     }
@@ -390,7 +371,7 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                                 .setBinding((value) -> {
                                     this.vanillaOpts.cloudRange().set(value);
 
-                                    Minecraft.getInstance().levelRenderer.cloudRenderer().markForRebuild();
+                                    Minecraft.getInstance().levelRenderer.getCloudRenderer().markForRebuild();
                                 }, () -> this.vanillaOpts.cloudRange().get())
                                 .setImpact(OptionImpact.LOW)
                                 .setValueFormatter(ControlValueFormatterImpls.translateVariable("options.chunks"))
@@ -547,7 +528,7 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                                 .setDefaultValue(FilterMode.NEAREST)
                                 .setBinding(filterMode -> {
                                     this.sodiumOpts.quality.pixelFilteringMode = filterMode;
-                                    Minecraft.getInstance().levelExtractor.resetSampler();
+                                    Minecraft.getInstance().levelRenderer.resetSampler();
                                 }, () -> this.sodiumOpts.quality.pixelFilteringMode)
                                 .setImpact(OptionImpact.MEDIUM)
                 )
@@ -885,7 +866,7 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                 .setDefaultValue(DEFAULTS.performance.useNoErrorGLContext)
                 .setBinding(value -> this.sodiumOpts.performance.useNoErrorGLContext = value, () -> this.sodiumOpts.performance.useNoErrorGLContext)
                 .setEnabledProvider((state) -> {
-                    if (!RenderSystem.getDevice().getDeviceInfo().backendName().contains("OpenGL")) return false;
+                    if (!RenderSystem.getDevice().getBackendName().contains("OpenGL")) return false;
                     GLCapabilities capabilities = GL.getCapabilities();
                     return (capabilities.OpenGL46 || capabilities.GL_KHR_no_error)
                             && !Workarounds.isWorkaroundEnabled(Workarounds.Reference.NO_ERROR_CONTEXT_UNSUPPORTED);

@@ -34,7 +34,7 @@ public class TerrainRenderPass {
     }
 
     public RenderTarget getTarget() {
-        return Minecraft.getInstance().gameRenderer.mainRenderTarget();
+        return Minecraft.getInstance().getMainRenderTarget();
     }
 
     public GpuTextureView getAtlas() {

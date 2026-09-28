@@ -3,7 +3,6 @@ package net.caffeinemc.mods.sodium.mixin.core.world.biome;
 import net.caffeinemc.mods.sodium.client.world.BiomeSeedProvider;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.client.renderer.extract.LevelExtractor;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -26,7 +25,7 @@ public class ClientLevelMixin implements BiomeSeedProvider {
                              Holder<DimensionType> dimensionType,
                              int serverChunkRadius,
                              int serverSimulationDistance,
-                             LevelExtractor levelExtractor,
+                             net.minecraft.client.renderer.LevelRenderer levelRenderer,
                              boolean isDebug,
                              long biomeZoomSeed,
                              int seaLevel,

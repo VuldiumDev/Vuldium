@@ -173,14 +173,14 @@ public class VertexSerializerFactory {
             var elementType = dstVertexFormat.getElements().get(elementIndex);
 
             // If the destination format has the element, then the source format needs to have it as well
-            if (!srcVertexFormat.contains(elementType.name())) {
+            if (!srcVertexFormat.contains(elementType)) {
                 throw new RuntimeException("Source format is missing element %s as required by destination format".formatted(elementType));
             }
 
-            var srcOffset = srcVertexFormat.getElement(elementType.name()).offset();
-            var dstOffset = elementType.offset();
+            var srcOffset = srcVertexFormat.getOffset(elementType);
+            var dstOffset = dstVertexFormat.getOffset(elementType);
 
-            ops.add(new MemoryTransfer(srcOffset, dstOffset, elementType.format().blockSize()));
+            ops.add(new MemoryTransfer(srcOffset, dstOffset, elementType.byteSize()));
         }
 
         return mergeAdjacentMemoryTransfers(ops);

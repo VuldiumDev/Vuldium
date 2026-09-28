@@ -1,6 +1,8 @@
 package net.caffeinemc.mods.sodium.client.util;
 
 import net.minecraft.TracingExecutor;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderBuffers;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.chunk.SectionCompiler;
@@ -9,16 +11,14 @@ import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
-import java.util.function.Consumer;
-
 public class IgnoringSectionRenderDispatcher extends SectionRenderDispatcher {
-    public IgnoringSectionRenderDispatcher(TracingExecutor executor, RenderBuffers renderBuffers, SectionCompiler sectionCompiler, Consumer<RenderSection> onSectionMeshUpdate) {
-        super(executor, renderBuffers, sectionCompiler, onSectionMeshUpdate);
+    public IgnoringSectionRenderDispatcher(ClientLevel level, LevelRenderer renderer, TracingExecutor executor, RenderBuffers renderBuffers, SectionCompiler sectionCompiler) {
+        super(level, renderer, executor, renderBuffers, sectionCompiler);
         super.dispose();
     }
 
     @Override
-    public void setCompiler(SectionCompiler sectionCompiler) {
+    public void setLevel(ClientLevel level, SectionCompiler sectionCompiler) {
 
     }
 
@@ -43,7 +43,7 @@ public class IgnoringSectionRenderDispatcher extends SectionRenderDispatcher {
     }
 
     @Override
-    public void uploadTerrainBuffersToGpu() {
+    public void uploadGlobalGeomBuffersToGPU() {
     }
 
     @Override

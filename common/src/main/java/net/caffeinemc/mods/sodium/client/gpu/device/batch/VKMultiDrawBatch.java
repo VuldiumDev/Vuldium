@@ -17,9 +17,9 @@ public final class VKMultiDrawBatch extends MultiDrawBatch {
 
     @Override
     public void put(int size, int elementCount, int baseVertex, long elementOffset) {
-        MemoryIntrinsics.putInt(this.pCommands + (size * VkMultiDrawIndexedInfoEXT.SIZEOF) + VkMultiDrawIndexedInfoEXT.INDEXCOUNT, elementCount);
-        MemoryIntrinsics.putInt(this.pCommands + (size * VkMultiDrawIndexedInfoEXT.SIZEOF) + VkMultiDrawIndexedInfoEXT.VERTEXOFFSET, UInt32.uncheckedDowncast(baseVertex));
-        MemoryIntrinsics.putInt(this.pCommands + (size * VkMultiDrawIndexedInfoEXT.SIZEOF) + VkMultiDrawIndexedInfoEXT.FIRSTINDEX, UInt32.uncheckedDowncast(elementOffset));
+        MemoryIntrinsics.putInt(this.pCommands + ((long) size * VkMultiDrawIndexedInfoEXT.SIZEOF) + VkMultiDrawIndexedInfoEXT.INDEXCOUNT, elementCount);
+        MemoryIntrinsics.putInt(this.pCommands + ((long) size * VkMultiDrawIndexedInfoEXT.SIZEOF) + VkMultiDrawIndexedInfoEXT.VERTEXOFFSET, UInt32.uncheckedDowncast(baseVertex));
+        MemoryIntrinsics.putInt(this.pCommands + ((long) size * VkMultiDrawIndexedInfoEXT.SIZEOF) + VkMultiDrawIndexedInfoEXT.FIRSTINDEX, UInt32.uncheckedDowncast(elementOffset));
 
         this.updateMaxElementCount(elementCount);
     }
@@ -29,7 +29,13 @@ public final class VKMultiDrawBatch extends MultiDrawBatch {
         if (this.size <= 0) {
             return;
         }
-        context.getPass().multiDrawIndexed(MemoryUtil.memIntBuffer(this.pCommands, this.size * COMMAND_INT_STRIDE), 1, 0, this.size);
+        for (int i = 0; i < this.size; i++) {
+            long cmd = this.pCommands + ((long) i * VkMultiDrawIndexedInfoEXT.SIZEOF);
+            int indexCount = MemoryIntrinsics.getInt(cmd + VkMultiDrawIndexedInfoEXT.INDEXCOUNT);
+            int vertexOffset = MemoryIntrinsics.getInt(cmd + VkMultiDrawIndexedInfoEXT.VERTEXOFFSET);
+            int firstIndex = MemoryIntrinsics.getInt(cmd + VkMultiDrawIndexedInfoEXT.FIRSTINDEX);
+            context.getPass().drawIndexed(indexCount, 1, firstIndex, vertexOffset);
+        }
     }
 
     @Override

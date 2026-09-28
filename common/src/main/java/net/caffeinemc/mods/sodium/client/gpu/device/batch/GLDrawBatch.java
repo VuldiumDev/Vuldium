@@ -21,11 +21,11 @@ public final class GLDrawBatch extends MultiDrawBatch {
 
     @Override
     public void put(int size, int elementCount, int baseVertex, long elementOffset) {
-        MemoryIntrinsics.putInt(this.pElementCount + (size << 2), UInt32.uncheckedDowncast(elementCount));
-        MemoryIntrinsics.putInt(this.pBaseVertex + (size << 2), UInt32.uncheckedDowncast(baseVertex));
+        MemoryIntrinsics.putInt(this.pElementCount + ((long) size << 2), UInt32.uncheckedDowncast(elementCount));
+        MemoryIntrinsics.putInt(this.pBaseVertex + ((long) size << 2), UInt32.uncheckedDowncast(baseVertex));
 
         // * 4 to convert to bytes (the index buffer contains integers)
-        MemoryIntrinsics.putAddress(this.pElementPointer + (size << Pointer.POINTER_SHIFT), elementOffset << 2);
+        MemoryIntrinsics.putAddress(this.pElementPointer + ((long) size << Pointer.POINTER_SHIFT), elementOffset << 2);
 
         this.updateMaxElementCount(elementCount);
     }
@@ -35,9 +35,12 @@ public final class GLDrawBatch extends MultiDrawBatch {
         if (this.size <= 0) {
             return;
         }
-        context.getPass().multiDrawIndexed(MemoryUtil.memPointerBuffer(this.pElementPointer, this.size),
-                MemoryUtil.memIntBuffer(this.pElementCount, this.size),
-                MemoryUtil.memIntBuffer(this.pBaseVertex, this.size), this.size);
+        for (int i = 0; i < this.size; i++) {
+            int elementCount = MemoryIntrinsics.getInt(this.pElementCount + ((long) i << 2));
+            int baseVertex = MemoryIntrinsics.getInt(this.pBaseVertex + ((long) i << 2));
+            long elementOffset = MemoryIntrinsics.getAddress(this.pElementPointer + ((long) i << Pointer.POINTER_SHIFT)) >> 2;
+            context.getPass().drawIndexed(elementCount, 1, (int) elementOffset, baseVertex);
+        }
     }
 
     @Override

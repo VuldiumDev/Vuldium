@@ -45,7 +45,7 @@ public class SharedQuadIndexBuffer {
 
         this.buffer = RenderSystem.getDevice().createBuffer(() -> "Shared index buffer", GpuBuffer.USAGE_INDEX | GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_MAP_WRITE, bufferSize);
 
-        var mapped = this.buffer.map(false, true);
+        var mapped = RenderSystem.getDevice().createCommandEncoder().mapBuffer(this.buffer, false, true);
         this.indexFormat.createIndexBuffer(mapped.data(), primitiveCount);
 
         mapped.close();

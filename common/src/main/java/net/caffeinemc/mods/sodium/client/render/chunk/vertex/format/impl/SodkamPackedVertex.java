@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.impl;
 
-import com.mojang.blaze3d.GpuFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import net.caffeinemc.mods.sodium.api.memory.MemoryIntrinsics;
 import net.caffeinemc.mods.sodium.api.util.ColorARGB;
 import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.ChunkVertexEncoder;
@@ -30,11 +30,16 @@ import net.caffeinemc.mods.sodium.client.render.chunk.vertex.format.ChunkVertexT
 public class SodkamPackedVertex implements ChunkVertexType {
     public static final int STRIDE = 16;
 
-    public static final VertexFormat VERTEX_FORMAT = VertexFormat.builder(0)
-            .addAttribute("a_Position", GpuFormat.R32_UINT)
-            .addAttribute("a_Color", GpuFormat.RGBA8_UNORM)
-            .addAttribute("a_TexCoord", GpuFormat.RG16_UINT)
-            .addAttribute("a_LightAndData", GpuFormat.RGBA8_UINT)
+    public static final VertexFormatElement POSITION_ELEMENT = VertexFormatElement.register(11, 0, VertexFormatElement.Type.UINT, false, 1);
+    public static final VertexFormatElement COLOR_ELEMENT = VertexFormatElement.register(12, 1, VertexFormatElement.Type.UBYTE, true, 4);
+    public static final VertexFormatElement TEXCOORD_ELEMENT = VertexFormatElement.register(13, 2, VertexFormatElement.Type.USHORT, false, 2);
+    public static final VertexFormatElement LIGHT_AND_DATA_ELEMENT = VertexFormatElement.register(14, 3, VertexFormatElement.Type.UBYTE, false, 4);
+
+    public static final VertexFormat VERTEX_FORMAT = VertexFormat.builder()
+            .add("a_Position", POSITION_ELEMENT)
+            .add("a_Color", COLOR_ELEMENT)
+            .add("a_TexCoord", TEXCOORD_ELEMENT)
+            .add("a_LightAndData", LIGHT_AND_DATA_ELEMENT)
             .build();
 
     private static final float POSITION_OFFSET = 8.0f;

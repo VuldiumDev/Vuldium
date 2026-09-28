@@ -35,7 +35,7 @@ public class GameRendererMixin {
     private void onRender(CallbackInfo ci) {
         // Do not start updating the console overlay until the font renderer is ready
         // This prevents the console from using tofu boxes for everything during early startup
-        if (Minecraft.getInstance().gui.overlay() != null) {
+        if (Minecraft.getInstance().getOverlay() != null) {
             if (!HAS_RENDERED_OVERLAY_ONCE) {
                 return;
             }

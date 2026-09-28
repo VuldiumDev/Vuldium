@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.OptionalInt;
 
 /**
  * Аппаратный проход масштабирования (Upscale Blit Pass) для вывода кадра 3D-мира
@@ -31,8 +32,7 @@ public class SodkamBlitPass {
             .withLocation(Identifier.fromNamespaceAndPath("sodium", "pipeline/sodkam_fsr_rcas"))
             .withVertexShader(Identifier.withDefaultNamespace("core/screenquad"))
             .withFragmentShader(Identifier.fromNamespaceAndPath("sodium", "post/sodkam_fsr_rcas"))
-            .withBindGroupLayout(BindGroupLayouts.IN_SAMPLER)
-            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withSampler("InSampler")
             .withColorTargetState(ColorTargetState.DEFAULT)
             .build();
 
@@ -40,8 +40,7 @@ public class SodkamBlitPass {
             .withLocation(Identifier.fromNamespaceAndPath("sodium", "pipeline/sodkam_dlss"))
             .withVertexShader(Identifier.withDefaultNamespace("core/screenquad"))
             .withFragmentShader(Identifier.fromNamespaceAndPath("sodium", "post/sodkam_dlss"))
-            .withBindGroupLayout(BindGroupLayouts.IN_SAMPLER)
-            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withSampler("InSampler")
             .withColorTargetState(ColorTargetState.DEFAULT)
             .build();
 
@@ -49,8 +48,7 @@ public class SodkamBlitPass {
             .withLocation(Identifier.fromNamespaceAndPath("sodium", "pipeline/sodkam_xess"))
             .withVertexShader(Identifier.withDefaultNamespace("core/screenquad"))
             .withFragmentShader(Identifier.fromNamespaceAndPath("sodium", "post/sodkam_xess"))
-            .withBindGroupLayout(BindGroupLayouts.IN_SAMPLER)
-            .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+            .withSampler("InSampler")
             .withColorTargetState(ColorTargetState.DEFAULT)
             .build();
 
@@ -70,11 +68,11 @@ public class SodkamBlitPass {
         try (RenderPass pass = encoder.createRenderPass(
                 () -> "Vuldium Upscale Blit",
                 dst.getColorTextureView(),
-                Optional.empty())) {
+                OptionalInt.empty())) {
             RenderSystem.bindDefaultUniforms(pass);
             pass.setPipeline(targetPipeline);
             pass.bindTexture("InSampler", src.getColorTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
-            pass.draw(3, 1, 0, 0);
+            pass.draw(0, 3);
         }
     }
 }

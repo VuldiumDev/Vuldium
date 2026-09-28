@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.sodium.client.render.chunk;
 
-import com.mojang.blaze3d.IndexType;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -127,7 +127,7 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
         this.drawContext.setContext(pass, this.activeProgram);
 
         if (!useIndexedTessellation && this.sharedIndexBuffer.getBufferObject() != null) {
-            pass.setIndexBuffer(this.sharedIndexBuffer.getBufferObject(), IndexType.INT);
+            pass.setIndexBuffer(this.sharedIndexBuffer.getBufferObject(), VertexFormat.IndexType.INT);
         }
 
         pass.setUniform("u_Globals", uniformData);
@@ -160,20 +160,18 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
                 if (indexBuffer == null) {
                     continue;
                 }
-                pass.setIndexBuffer(indexBuffer, IndexType.INT);
+                pass.setIndexBuffer(indexBuffer, VertexFormat.IndexType.INT);
             }
 
             var geometryBuffer = resources.getGeometryBuffer();
             if (geometryBuffer == null) {
                 continue;
             }
-            pass.setVertexBuffer(0, geometryBuffer.slice());
+            pass.setVertexBuffer(0, geometryBuffer);
 
             float x = (float) ((double) region.getOriginX() - camera.x);
             float y = (float) ((double) region.getOriginY() - camera.y);
             float z = (float) ((double) region.getOriginZ() - camera.z);
-
-            this.drawContext.pushConstants(x, y, z, Math.toIntExact(System.currentTimeMillis() - region.getCreationTime()), region.getId());
 
             batch.draw(this.drawContext);
         }

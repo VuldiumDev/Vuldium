@@ -38,7 +38,8 @@ public class NeoForgeLevelRenderHooks implements PlatformLevelRenderHooks {
                         Minecraft.getInstance().options.ambientOcclusion().get(),
                         true,
                         Minecraft.getInstance().getBlockColors()
-                )
+                ),
+                origin
         );
         for (Object o : renderers) {
             ((AddSectionGeometryEvent.AdditionalSectionRenderer) o).render(context);

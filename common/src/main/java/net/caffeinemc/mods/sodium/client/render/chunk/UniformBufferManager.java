@@ -31,7 +31,7 @@ public class UniformBufferManager {
     private GpuBufferSlice uniformData;
 
     private GpuBuffer sectionTimeInfo;
-    private GpuBufferSlice.MappedView sectionTimeInfoMap;
+    private GpuBuffer.MappedView sectionTimeInfoMap;
 
     private boolean hasUpdatedThisFrame = false;
 
@@ -50,14 +50,9 @@ public class UniformBufferManager {
                 GpuBuffer.USAGE_UNIFORM_TEXEL_BUFFER | GpuBuffer.USAGE_COPY_SRC | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_MAP_WRITE,
                 (long) maxRegions * TIME_BUFFER_SIZE_PER_REGION);
 
-        if (RenderSystem.getDevice().getDeviceInfo().features().persistentMapping()) {
-            this.sectionTimeInfoMap = this.sectionTimeInfo.map(false, true);
-            MemoryUtil.memSet(this.sectionTimeInfoMap.data(), 0xFFFFFFFF);
-        } else {
-            this.sectionTimeInfoMap = null;
-            try (var mapping = this.sectionTimeInfo.map(false, true)) {
-                MemoryUtil.memSet(mapping.data(), 0xFFFFFFFF);
-            }
+        this.sectionTimeInfoMap = null;
+        try (var mapping = RenderSystem.getDevice().createCommandEncoder().mapBuffer(this.sectionTimeInfo, false, true)) {
+            MemoryUtil.memSet(mapping.data(), 0xFFFFFFFF);
         }
     }
 
@@ -74,13 +69,8 @@ public class UniformBufferManager {
 
         RenderSystem.getDevice().createCommandEncoder().copyToBuffer(oldBuffer.slice(), this.sectionTimeInfo.slice(0, oldBuffer.size()));
 
-        if (RenderSystem.getDevice().getDeviceInfo().features().persistentMapping()) {
-            this.sectionTimeInfoMap = this.sectionTimeInfo.map(false, true);
-            MemoryUtil.memSet(MemoryUtil.memAddress(this.sectionTimeInfoMap.data()) + oldBuffer.size(), 0xFFFFFFFF, this.sectionTimeInfo.size() - oldBuffer.size());
-        } else {
-            try (var mapping = this.sectionTimeInfo.map(false, true)) {
-                MemoryUtil.memSet(MemoryUtil.memAddress(mapping.data()) + oldBuffer.size(), 0xFFFFFFFF, this.sectionTimeInfo.size() - oldBuffer.size());
-            }
+        try (var mapping = RenderSystem.getDevice().createCommandEncoder().mapBuffer(this.sectionTimeInfo, false, true)) {
+            MemoryUtil.memSet(MemoryUtil.memAddress(mapping.data()) + oldBuffer.size(), 0xFFFFFFFF, this.sectionTimeInfo.size() - oldBuffer.size());
         }
 
         oldBuffer.close(); // defers

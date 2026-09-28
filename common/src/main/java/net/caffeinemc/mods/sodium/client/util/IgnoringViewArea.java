@@ -1,16 +1,21 @@
 package net.caffeinemc.mods.sodium.client.util;
 
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.ViewArea;
 import net.minecraft.client.renderer.chunk.SectionRenderDispatcher;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.world.level.Level;
 
 public class IgnoringViewArea extends ViewArea {
     private SectionPos ppos;
 
-    public IgnoringViewArea(SectionRenderDispatcher sectionRenderDispatcher) {
-        super(sectionRenderDispatcher, 0, 0, 0, 0, 0, null);
+    public IgnoringViewArea(SectionRenderDispatcher sectionRenderDispatcher, Level level, int viewDistance, LevelRenderer levelRenderer) {
+        super(sectionRenderDispatcher, level, viewDistance, levelRenderer);
+    }
+
+    @Override
+    protected void createSections(SectionRenderDispatcher sectionRenderDispatcher) {
+        this.sections = new SectionRenderDispatcher.RenderSection[0];
     }
 
     @Override
@@ -19,22 +24,14 @@ public class IgnoringViewArea extends ViewArea {
     }
 
     @Override
-    public boolean repositionCamera(SectionPos cameraSectionPos) {
+    public void repositionCamera(SectionPos cameraSectionPos) {
         if (!cameraSectionPos.equals(this.ppos)) {
             this.ppos = cameraSectionPos;
-            return true;
         }
-
-        return false;
     }
 
     @Override
-    public SectionRenderDispatcher.@Nullable RenderSection getRenderSectionAt(BlockPos pos) {
-        return null;
-    }
+    public void setDirty(int sectionX, int sectionY, int sectionZ, boolean reRenderOnMainThread) {
 
-    @Override
-    protected SectionRenderDispatcher.@Nullable RenderSection getRenderSection(long sectionNode) {
-        return null;
     }
 }

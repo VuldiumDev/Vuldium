@@ -20,6 +20,7 @@ import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import net.caffeinemc.mods.sodium.client.compat.RenderPipelineBuilderCompat;
 import org.jspecify.annotations.Nullable;
 
 
@@ -68,18 +69,18 @@ public abstract class ShaderChunkRenderer implements ChunkRenderer {
         List<String> constants = createShaderConstants(pass);
 
         var builder = RenderPipeline.builder()
-                .withBindGroupLayout(BIND_GROUP)
-                .withBindGroupLayout(LIGHT_GROUP)
                 .withLocation(Identifier.fromNamespaceAndPath("sodium", pass.getPipeline().getLocation().getPath()))
                 .withCull(true)
                 .withVertexShader(Identifier.fromNamespaceAndPath("sodium", "blocks/block_layer_opaque"))
                 .withFragmentShader(Identifier.fromNamespaceAndPath("sodium", "blocks/block_layer_opaque"))
                 .withDepthStencilState(DepthStencilState.DEFAULT)
-                .withPrimitiveTopology(PrimitiveTopology.QUADS)
-                .withVertexBinding(0, this.vertexFormat);
+                .withVertexFormat(this.vertexFormat, VertexFormat.Mode.QUADS);
+
+        RenderPipelineBuilderCompat.applyLayout(builder, BIND_GROUP);
+        RenderPipelineBuilderCompat.applyLayout(builder, LIGHT_GROUP);
 
         if (pass.isTranslucent()) {
-            builder.withColorTargetState(new ColorTargetState(Optional.of(BlendFunction.TRANSLUCENT), GpuFormat.RGBA8_UNORM, 0xFFFFFFFF));
+            builder.withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT));
         } else {
             builder.withColorTargetState(ColorTargetState.DEFAULT);
         }
@@ -101,14 +102,14 @@ public abstract class ShaderChunkRenderer implements ChunkRenderer {
         List<String> constants = createShaderConstants(pass);
 
         var builder = RenderPipeline.builder()
-                .withBindGroupLayout(BIND_GROUP)
                 .withLocation(Identifier.fromNamespaceAndPath("sodium", pass.getPipeline().getLocation().getPath()))
                 .withCull(true)
                 .withVertexShader(Identifier.fromNamespaceAndPath("sodium", "blocks/block_layer_opaque"))
                 .withFragmentShader(Identifier.fromNamespaceAndPath("sodium", "blocks/block_layer_opaque"))
                 .withDepthStencilState(DepthStencilState.DEFAULT)
-                .withPrimitiveTopology(PrimitiveTopology.QUADS)
-                .withVertexBinding(0, this.vertexFormat);
+                .withVertexFormat(this.vertexFormat, VertexFormat.Mode.QUADS);
+
+        RenderPipelineBuilderCompat.applyLayout(builder, BIND_GROUP);
 
         for (String s : constants) {
             builder.withShaderDefine(s);
@@ -121,7 +122,7 @@ public abstract class ShaderChunkRenderer implements ChunkRenderer {
         }
 
         return OitPipelineSet.builder(
-                "sodium_terrain", builder).withAccumulateModifier(i -> i.withBindGroupLayout(LIGHT_GROUP)).build();
+                "sodium_terrain", builder).withAccumulateModifier(i -> RenderPipelineBuilderCompat.applyLayout(i, LIGHT_GROUP)).build();
     }
 
     private static List<String> createShaderConstants(TerrainRenderPass pass) {

@@ -392,7 +392,7 @@ public class SodiumWorldRenderer {
             crumblingOverlay = null;
         }
 
-        BlockEntityRenderState blockEntityRenderState = Minecraft.getInstance().getBlockEntityRenderDispatcher().tryExtractRenderState(blockEntity, tickDelta, crumblingOverlay, global);
+        BlockEntityRenderState blockEntityRenderState = Minecraft.getInstance().getBlockEntityRenderDispatcher().tryExtractRenderState(blockEntity, tickDelta, crumblingOverlay);
         if (blockEntityRenderState != null) {
             levelRenderState.blockEntityRenderStates.add(blockEntityRenderState);
         }

@@ -1,6 +1,7 @@
 package net.caffeinemc.mods.sodium.client.model.light.data;
 
 import net.caffeinemc.mods.sodium.client.services.PlatformBlockAccess;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -64,7 +65,7 @@ public abstract class LightDataAccess {
 
         BlockState state = level.getBlockState(pos);
 
-        boolean em = state.emissiveRendering();
+        boolean em = state.emissiveRendering(level, pos);
         boolean op = !state.propagatesSkylightDown();
         boolean fo = state.isSolidRender();
         boolean fc = state.isCollisionShapeFullBlock(level, pos);
@@ -82,7 +83,7 @@ public abstract class LightDataAccess {
                 bl = level.getBrightness(LightLayer.BLOCK, pos);
                 sl = level.getBrightness(LightLayer.SKY, pos);
             } else {
-                int light = LightCoordsUtil.getLightCoords(LightCoordsUtil.BrightnessGetter.DEFAULT, level, state, pos);
+                int light = LevelRenderer.getLightCoords(LevelRenderer.BrightnessGetter.DEFAULT, level, state, pos);
                 bl = LightCoordsUtil.block(light);
                 sl = LightCoordsUtil.sky(light);
             }

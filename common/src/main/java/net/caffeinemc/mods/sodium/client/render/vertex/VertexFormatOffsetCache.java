@@ -1,6 +1,7 @@
 package net.caffeinemc.mods.sodium.client.render.vertex;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
 import java.util.Map;
@@ -23,13 +24,13 @@ public class VertexFormatOffsetCache {
     public static final int LIGHT = 4;
     public static final int NORMAL = 5;
 
-    private static final String[] KEYS = {
-            "Position",
-            "Color",
-            "UV0",
-            "UV1",
-            "UV2",
-            "Normal"
+    private static final VertexFormatElement[] ELEMENTS = {
+            VertexFormatElement.POSITION,
+            VertexFormatElement.COLOR,
+            VertexFormatElement.UV0,
+            VertexFormatElement.UV1,
+            VertexFormatElement.UV2,
+            VertexFormatElement.NORMAL
     };
 
     private final Map<VertexFormat, int[]> offsetCache = new Reference2ReferenceOpenHashMap<>();
@@ -39,9 +40,9 @@ public class VertexFormatOffsetCache {
             int[] offsets = new int[6];
 
             for (int i = 0; i < 6; i++) {
-                var key = KEYS[i];
-                if (f.contains(key)) {
-                    offsets[i] = f.getElement(key).offset();
+                var elem = ELEMENTS[i];
+                if (f.contains(elem)) {
+                    offsets[i] = f.getOffset(elem);
                 } else {
                     offsets[i] = -1;
                 }

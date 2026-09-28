@@ -394,14 +394,14 @@ public class Config implements ConfigState {
     public static void onRendererUpdate() {
         var client = Minecraft.getInstance();
         if (client.level != null) {
-            client.levelRenderer.clearVisibleSections();
+            client.levelRenderer.allChanged();
         }
     }
 
     public static void onRendererReload() {
         var client = Minecraft.getInstance();
         if (client.level != null) {
-            client.levelExtractor.allChanged();
+            client.levelRenderer.allChanged();
         }
     }
 

@@ -13,6 +13,7 @@ import com.mojang.blaze3d.textures.GpuSampler;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.caffeinemc.mods.sodium.client.SodiumClientMod;
 import net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer;
@@ -171,7 +172,7 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
             try (RenderPass pass = encoder.createRenderPass(
                     () -> "Terrain (" + group.name() + ")",
                     target.getColorTextureView(),
-                    Optional.empty(),
+                    OptionalInt.empty(),
                     target.getDepthTextureView(),
                     OptionalDouble.empty())) {
                 RenderSystem.bindDefaultUniforms(pass);
@@ -205,11 +206,12 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
 
         this.renderer.reload();
 
-        this.sectionRenderDispatcher = new IgnoringSectionRenderDispatcher(Util.backgroundExecutor(),
+        this.sectionRenderDispatcher = new IgnoringSectionRenderDispatcher(level,
+                (LevelRenderer) (Object) this,
+                Util.backgroundExecutor(),
                 this.renderBuffers,
-                null,
-                this.sectionOcclusionGraph::schedulePropagationFrom);
-        this.viewArea = new IgnoringViewArea(this.sectionRenderDispatcher);
+                null);
+        this.viewArea = new IgnoringViewArea(this.sectionRenderDispatcher, level, options.renderDistance().get(), (LevelRenderer) (Object) this);
         this.sectionOcclusionGraph .waitAndReset(this.viewArea);
 
         this.clearVisibleSections();

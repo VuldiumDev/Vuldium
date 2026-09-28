@@ -9,11 +9,7 @@ public class MojangStagingBuffer implements StagingBuffer {
     private final MappedStagingBuffer staging;
 
     public MojangStagingBuffer(int size) {
-        if (RenderSystem.getDevice().getDeviceInfo().features().persistentMapping()) {
-            this.staging = new MappedStagingBuffer(size);
-        } else {
-            this.staging = null;
-        }
+        this.staging = null;
     }
 
     @Override
@@ -42,11 +38,6 @@ public class MojangStagingBuffer implements StagingBuffer {
 
     @Override
     public long getUploadSizeLimit(long frameDuration) {
-        return this.staging != null ? this.staging.getUploadSizeLimit(frameDuration) : 25600000;
-    }
-
-    @Override
-    public String toString() {
-        return this.staging != null ? this.staging.toString() : "Fallback";
+        return this.staging == null ? Long.MAX_VALUE : this.staging.getUploadSizeLimit(frameDuration);
     }
 }

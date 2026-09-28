@@ -9,7 +9,6 @@ import net.caffeinemc.mods.sodium.client.config.ConfigManager;
 import net.caffeinemc.mods.sodium.client.gui.SodiumConfigBuilder;
 import net.caffeinemc.mods.sodium.client.gui.SodiumOptions;
 import net.caffeinemc.mods.sodium.client.platform.PlatformHelper;
-import net.minecraft.client.GameLoadCookie;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.main.GameConfig;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -44,58 +43,11 @@ public class MinecraftMixin {
         }
     }
 
-    @WrapOperation(
-            method = "renderFrame",
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lcom/mojang/renderpearl/api/device/GpuSurface;present()V"
-            )
-    )
-    private void sodkam$presentWithFrameGeneration(com.mojang.blaze3d.systems.GpuSurface surface, Operation<Void> original) {
-        var latencyMode = SodiumClientMod.options().sodkam.lowLatency;
-        if (latencyMode != null) {
-            var latency = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.latency.SodkamLowLatency.getInstance();
-            latency.setMode(latencyMode);
-            latency.onRenderSubmit();
-        }
-
-        original.call(surface);
-
-        var mode = SodiumClientMod.options().sodkam.frameGen;
-        int multiplier = mode.getMultiplier();
-        if (multiplier > 1 && !surface.isSuboptimal()) {
-            int extraFrames = multiplier - 1;
-            for (int i = 0; i < extraFrames; i++) {
-                try {
-                    if (surface.isSuboptimal()) {
-                        break;
-                    }
-                    surface.acquireNextTexture();
-                    if (!surface.isAcquired()) {
-                        break;
-                    }
-                    var main = Minecraft.getInstance().gameRenderer.mainRenderTarget();
-                    if (main != null && main.getColorTextureView() != null) {
-                        var encoder = com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder();
-                        surface.blitFromTexture(encoder, main.getColorTextureView());
-                        encoder.submit();
-                    }
-                    if (surface.isAcquired()) {
-                        surface.present();
-                        this.frames++;
-                    }
-                } catch (Throwable ignored) {
-                    break;
-                }
-            }
-        }
-    }
-
     /**
      * Check for problematic core shader resource packs after the initial game launch.
      */
     @Inject(method = "onGameLoadFinished", at = @At("HEAD"))
-    private void postInit(GameLoadCookie cookie, CallbackInfo ci) {
+    private void postInit(Object cookie, CallbackInfo ci) {
         ResourcePackScanner.checkIfCoreShaderLoaded(this.resourceManager);
 
         ConfigManager.registerConfigsLate();

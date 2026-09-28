@@ -31,7 +31,7 @@ public class MappedStagingBuffer implements StagingBuffer {
 
     public MappedStagingBuffer(int capacity) {
         GpuBuffer buffer = RenderSystem.getDevice().createBuffer(() -> "Staging", GpuBuffer.USAGE_COPY_SRC | GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_COPY_DST, capacity);
-        GpuBufferSlice.MappedView map = buffer.map(false, true);
+        GpuBuffer.MappedView map = RenderSystem.getDevice().createCommandEncoder().mapBuffer(buffer, false, true);
 
         this.mappedBuffer = new MappedBuffer(buffer, map, MemoryUtil.memAddress(map.data()));
         this.capacity = capacity;
@@ -171,7 +171,7 @@ public class MappedStagingBuffer implements StagingBuffer {
     }
 
     private record MappedBuffer(GpuBuffer buffer,
-                                GpuBufferSlice.MappedView map, long mapAddr) {
+                                GpuBuffer.MappedView map, long mapAddr) {
         public void delete() {
             this.map.close();
             this.buffer.close();

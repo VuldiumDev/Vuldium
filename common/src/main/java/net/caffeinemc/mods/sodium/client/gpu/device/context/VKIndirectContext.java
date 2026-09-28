@@ -1,8 +1,7 @@
 package net.caffeinemc.mods.sodium.client.gpu.device.context;
 
-
 import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import org.lwjgl.system.MemoryUtil;
 
@@ -10,7 +9,7 @@ public class VKIndirectContext extends VKDrawContext {
     private static final int INITIAL_SIZE = 512_000;
 
     private MappableRingBuffer ringBuffer;
-    public GpuBufferSlice.MappedView mappedView;
+    public GpuBuffer.MappedView mappedView;
     private int currentOffset;
     private int currentSize;
 
@@ -36,8 +35,8 @@ public class VKIndirectContext extends VKDrawContext {
         var lastSize = this.currentSize;
 
         this.currentSize = size;
-        this.ringBuffer = new MappableRingBuffer(() -> "Indirect ring buffer", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_INDIRECT_PARAMETERS, size);
-        this.mappedView = this.ringBuffer.currentBuffer().map(false, true);
+        this.ringBuffer = new MappableRingBuffer(() -> "Indirect ring buffer", GpuBuffer.USAGE_MAP_WRITE, size);
+        this.mappedView = RenderSystem.getDevice().createCommandEncoder().mapBuffer(this.ringBuffer.currentBuffer(), false, true);
 
         if (lastRingBuffer != null) {
             MemoryUtil.memCopy(MemoryUtil.memAddress(lastMappedView.data()), MemoryUtil.memAddress(this.mappedView.data()), lastSize);
@@ -50,7 +49,7 @@ public class VKIndirectContext extends VKDrawContext {
     public void rotate() {
         this.mappedView.close();
         this.ringBuffer.rotate();
-        this.mappedView = this.ringBuffer.currentBuffer().map(false, true);
+        this.mappedView = RenderSystem.getDevice().createCommandEncoder().mapBuffer(this.ringBuffer.currentBuffer(), false, true);
         this.currentOffset = 0;
     }
 
