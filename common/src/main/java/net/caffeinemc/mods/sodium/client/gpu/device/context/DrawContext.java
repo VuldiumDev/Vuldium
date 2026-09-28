@@ -25,6 +25,8 @@ public abstract class DrawContext {
 
     public abstract void setContext(RenderPass pass, RenderPipeline pipeline);
 
+    public abstract void pushConstants(float x, float y, float z, int currentTime, int regionId);
+
     public abstract void rotate();
 
     public abstract void delete();

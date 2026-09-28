@@ -10,6 +10,11 @@ public class GLDrawContext extends DrawContext {
     }
 
     @Override
+    public void pushConstants(float x, float y, float z, int currentTime, int regionId) {
+
+    }
+
+    @Override
     public void rotate() {
 
     }
