@@ -52,12 +52,17 @@ dependencies {
 
     compileOnly("net.fabricmc:sponge-mixin:0.13.2+mixin.0.8.5")
     compileOnly("net.fabricmc:fabric-loader:${BuildConfig.FABRIC_LOADER_VERSION}")
+    compileOnly("org.lwjgl:lwjgl-vulkan:${BuildConfig.LWJGL_VERSION}")
 
     // We need to be careful during pre-launch that we don't touch any Minecraft classes, since other mods
     // will not yet have an opportunity to apply transformations.
-    configurationPreLaunch("org.lwjgl:lwjgl:3.4.3")
-    configurationPreLaunch("org.lwjgl:lwjgl-opengl:3.4.3")
-    configurationPreLaunch("org.lwjgl:lwjgl-sdl:3.4.3")
+    configurationPreLaunch("org.lwjgl:lwjgl:${BuildConfig.LWJGL_VERSION}")
+    configurationPreLaunch("org.lwjgl:lwjgl-opengl:${BuildConfig.LWJGL_VERSION}")
+    if (BuildConfig.TARGET_VERSION != "26.1") {
+        configurationPreLaunch("org.lwjgl:lwjgl-sdl:${BuildConfig.LWJGL_VERSION}")
+    } else {
+        configurationPreLaunch("org.lwjgl:lwjgl-glfw:${BuildConfig.LWJGL_VERSION}")
+    }
     configurationPreLaunch("net.java.dev.jna:jna:5.14.0")
     configurationPreLaunch("net.java.dev.jna:jna-platform:5.14.0")
     configurationPreLaunch("org.slf4j:slf4j-api:2.0.9")

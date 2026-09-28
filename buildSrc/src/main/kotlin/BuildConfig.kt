@@ -26,6 +26,11 @@ object BuildConfig {
         else -> "0.160.5+26.3"
     }
 
+    val LWJGL_VERSION: String = when (TARGET_VERSION) {
+        "26.1" -> "3.4.1"
+        else -> "3.4.3"
+    }
+
     val MINECRAFT_DEPENDENCY: String = "$MINECRAFT_VERSION.x"
     val SUPPORT_FRAPI : Boolean = true
 

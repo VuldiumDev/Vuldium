@@ -13,12 +13,30 @@ import static org.lwjgl.system.libffi.LibFFI.*;
 @FunctionalInterface
 @NativeType("MSGBOXCALLBACK")
 public interface MsgBoxCallbackI extends CallbackI {
-    Callback.Descriptor CIF = new Callback.Descriptor(MsgBoxCallbackI.class,
-            MethodHandles.lookup(), apiCreateCIF(
-            FFI_DEFAULT_ABI,
-            ffi_type_void,
-            ffi_type_pointer
-    ));
+    Callback.Descriptor CIF = createDescriptor();
+
+    private static Callback.Descriptor createDescriptor() {
+        var cif = apiCreateCIF(
+                FFI_DEFAULT_ABI,
+                ffi_type_void,
+                ffi_type_pointer
+        );
+        try {
+            // LWJGL 3.4.3+ has (Class, MethodHandles.Lookup, FFICIF)
+            return Callback.Descriptor.class.getConstructor(Class.class, MethodHandles.Lookup.class, org.lwjgl.system.libffi.FFICIF.class)
+                    .newInstance(MsgBoxCallbackI.class, MethodHandles.lookup(), cif);
+        } catch (NoSuchMethodException e) {
+            try {
+                // LWJGL 3.4.1 has (MethodHandles.Lookup, FFICIF)
+                return Callback.Descriptor.class.getConstructor(MethodHandles.Lookup.class, org.lwjgl.system.libffi.FFICIF.class)
+                        .newInstance(MethodHandles.lookup(), cif);
+            } catch (ReflectiveOperationException ex) {
+                throw new RuntimeException("Failed to create Callback.Descriptor for MsgBoxCallbackI", ex);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Failed to create Callback.Descriptor for MsgBoxCallbackI", e);
+        }
+    }
 
     @Override
     default Callback.Descriptor getDescriptor() {
