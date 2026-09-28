@@ -4,8 +4,15 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuSampler;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.caffeinemc.mods.sodium.client.SodiumClientMod;
 import net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer;
@@ -148,6 +155,32 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
 
         this.renderer.prepareChunkRendering(this.matrices, pos.x, pos.y, pos.z);
         return new ChunkSectionsToRender(null, new EnumMap<>(ChunkSectionLayer.class), 0, new GpuBufferSlice[0]);
+    }
+
+    @WrapOperation(
+            method = "lambda$addMainPass$0",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/blaze3d/textures/GpuSampler;)V"
+            )
+    )
+    private void onRenderChunkGroup(ChunkSectionsToRender instance, ChunkSectionLayerGroup group, GpuSampler sampler, Operation<Void> original) {
+        if (this.renderer != null) {
+            RenderTarget target = group.outputTarget();
+            CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+            try (RenderPass pass = encoder.createRenderPass(
+                    () -> "Terrain (" + group.name() + ")",
+                    target.getColorTextureView(),
+                    Optional.empty(),
+                    target.getDepthTextureView(),
+                    OptionalDouble.empty())) {
+                RenderSystem.bindDefaultUniforms(pass);
+                var pos = this.levelRenderState.cameraRenderState.pos;
+                this.renderer.drawChunkLayer(pass, group, this.matrices, pos.x, pos.y, pos.z, sampler, null);
+            }
+        } else {
+            original.call(instance, group, sampler);
+        }
     }
 
     /**

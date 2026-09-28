@@ -173,6 +173,8 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
             float y = (float) ((double) region.getOriginY() - camera.y);
             float z = (float) ((double) region.getOriginZ() - camera.z);
 
+            this.drawContext.pushConstants(x, y, z, Math.toIntExact(System.currentTimeMillis() - region.getCreationTime()), region.getId());
+
             batch.draw(this.drawContext);
         }
 
