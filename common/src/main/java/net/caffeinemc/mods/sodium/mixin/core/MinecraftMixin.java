@@ -47,7 +47,7 @@ public class MinecraftMixin {
      * Check for problematic core shader resource packs after the initial game launch.
      */
     @Inject(method = "onGameLoadFinished", at = @At("HEAD"))
-    private void postInit(Object cookie, CallbackInfo ci) {
+    private void postInit(CallbackInfo ci) {
         ResourcePackScanner.checkIfCoreShaderLoaded(this.resourceManager);
 
         ConfigManager.registerConfigsLate();
