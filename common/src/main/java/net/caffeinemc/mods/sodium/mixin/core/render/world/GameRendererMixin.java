@@ -81,7 +81,7 @@ public class GameRendererMixin implements GameRendererStorage {
             method = "render",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel()V"))
+                    target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel(Lnet/minecraft/client/DeltaTracker;)V"))
     private void sodkam$beforeRenderLevel(CallbackInfo ci) {
         var quality = SodiumClientMod.options().sodkam.superResolution;
         if (quality == UpscaleQuality.NATIVE) {
@@ -108,7 +108,7 @@ public class GameRendererMixin implements GameRendererStorage {
             method = "render",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel()V",
+                    target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel(Lnet/minecraft/client/DeltaTracker;)V",
                     shift = At.Shift.AFTER))
     private void sodkam$afterWorldRender(CallbackInfo ci) {
         if (!this.sodkam$isWorldTargetActive) {

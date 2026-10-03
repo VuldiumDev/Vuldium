@@ -7,7 +7,6 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.renderer.feature.FeatureFrameContext;
 import net.minecraft.client.renderer.feature.QuadParticleFeatureRenderer;
-import net.minecraft.client.renderer.oit.OitStage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -29,7 +28,7 @@ public abstract class ParticleFeatureRendererMixin {
      * See <a href="https://github.com/CaffeineMC/sodium/issues/3612">this issue.</a>
      */
     @Inject(method = "executeGroup", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;bindDefaultUniforms(Lcom/mojang/blaze3d/systems/RenderPass;)V"))
-    private void sodium$bindDefaultUniforms(FeatureFrameContext context, OitStage stage, RenderPass renderPass, int groupIndex, List<QuadParticleFeatureRenderer.Submit> submits, boolean strictlyOrdered, CallbackInfo ci) {
+    private void sodium$bindDefaultUniforms(FeatureFrameContext context, int groupIndex, List<QuadParticleFeatureRenderer.Submit> submits, boolean strictlyOrdered, CallbackInfo ci, @Local RenderPass renderPass) {
         GpuBuffer globalUniform = RenderSystem.getGlobalSettingsUniform();
         if (globalUniform != null) {
             renderPass.setUniform("Globals", globalUniform);
