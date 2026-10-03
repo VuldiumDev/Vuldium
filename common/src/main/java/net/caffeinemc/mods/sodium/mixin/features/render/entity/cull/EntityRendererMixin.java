@@ -17,13 +17,13 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class EntityRendererMixin<T extends Entity, S extends EntityRenderState> {
     @WrapMethod(
             method = "shouldRender")
-    private boolean preShouldRender(T entity, Frustum culler, double camX, double camY, double camZ, float partialTicks, Operation<Boolean> original) {
+    private boolean preShouldRender(T entity, Frustum culler, double camX, double camY, double camZ, Operation<Boolean> original) {
         var renderer = SodiumWorldRenderer.instanceNullable();
 
         if (renderer == null) {
-            return original.call(entity, culler, camX, camY, camZ, partialTicks);
+            return original.call(entity, culler, camX, camY, camZ);
         }
 
-        return renderer.isEntityVisible((EntityRenderer<T, S>) (Object) this, entity, partialTicks)  && original.call(entity, culler, camX, camY, camZ, partialTicks);
+        return renderer.isEntityVisible((EntityRenderer<T, S>) (Object) this, entity)  && original.call(entity, culler, camX, camY, camZ);
     }
 }

@@ -449,7 +449,7 @@ public class SodiumWorldRenderer {
      *
      * @return True if the entity is visible, otherwise false
      */
-    public <T extends Entity, S extends EntityRenderState> boolean isEntityVisible(EntityRenderer<T, S> renderer, T entity, float partialTicks) {
+    public <T extends Entity, S extends EntityRenderState> boolean isEntityVisible(EntityRenderer<T, S> renderer, T entity) {
         if (!this.useEntityCulling) {
             return true;
         }
@@ -459,7 +459,7 @@ public class SodiumWorldRenderer {
             return true;
         }
 
-        AABB bb = ((EntityRendererAccessor) renderer).sodium$getBoundingBoxForCulling(entity, partialTicks);
+        AABB bb = ((EntityRendererAccessor) renderer).sodium$getBoundingBoxForCulling(entity);
 
         // bail on very large entities to avoid checking many sections
         double entityVolume = (bb.maxX - bb.minX) * (bb.maxY - bb.minY) * (bb.maxZ - bb.minZ);
