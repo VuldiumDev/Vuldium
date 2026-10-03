@@ -111,9 +111,12 @@ public class SodkamWorldRenderer implements AutoCloseable {
                         return null;
                     }
                     try {
-                        var handles = VulkanContextBridge.extractNativeHandles();
-                        SodkamDeviceContext ctx = new SodkamDeviceContextImpl(handles);
-                        INSTANCE = new SodkamWorldRenderer(ctx);
+                        SodkamDeviceContext ctx = VulkanContextBridge.createDeviceContextSafe();
+                        if (ctx != null) {
+                            INSTANCE = new SodkamWorldRenderer(ctx);
+                        } else {
+                            return null;
+                        }
                     } catch (Throwable t) {
                         LOGGER.warn("Не удалось инициализировать SodkamWorldRenderer (fallback на ванильный пайплайн): {}", t.getMessage());
                         return null;

@@ -24,6 +24,8 @@ public final class VulkanContextBridge {
     private static final Logger LOGGER = LoggerFactory.getLogger("Vuldium/ContextBridge");
 
     private static Field CMD_BUF_FIELD;
+    private static volatile boolean fallbackActive = false;
+    private static volatile String fallbackReason = null;
 
     public record NativeHandles(
             VkDevice device,
@@ -35,6 +37,40 @@ public final class VulkanContextBridge {
     ) {}
 
     private VulkanContextBridge() {}
+
+    public static boolean isFallbackActive() {
+        return fallbackActive;
+    }
+
+    public static String getFallbackReason() {
+        return fallbackReason;
+    }
+
+    public static synchronized void activateFallback(String reason) {
+        fallbackActive = true;
+        fallbackReason = reason;
+        LOGGER.warn("[VULDIUM CRASH PREVENTION] Активирован безопасный Fallback-режим: {}", reason);
+    }
+
+    public static SodkamDeviceContext createDeviceContextSafe() {
+        if (fallbackActive) {
+            LOGGER.warn("Vuldium работает в безопасном Fallback-режиме: {}", fallbackReason);
+            return null;
+        }
+
+        try {
+            NativeHandles handles = extractNativeHandles();
+            if (handles == null || handles.device() == null) {
+                activateFallback("Нативное устройство Vulkan от Mojang не найдено.");
+                return null;
+            }
+            return new SodkamDeviceContextImpl(handles);
+        } catch (Throwable t) {
+            activateFallback("Сбой при перехвате Vulkan-контекста: " + t.getMessage());
+            LOGGER.error("Критическая ошибка инициализации нативного Vulkan. Активирован fallback-конвейер.", t);
+            return null;
+        }
+    }
 
     /**
      * Проверяет, активен ли в данный момент нативный Vulkan-бэкенд RenderPearl.

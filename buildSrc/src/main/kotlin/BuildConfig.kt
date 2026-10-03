@@ -1,12 +1,13 @@
 import org.gradle.api.Project
 
 object BuildConfig {
-    val TARGET_VERSION: String = System.getProperty("mc.version") ?: "26.3"
+    val TARGET_VERSION: String = System.getProperty("mc.version") ?: "26.4"
 
     val MINECRAFT_VERSION: String = when (TARGET_VERSION) {
         "26.1" -> "26.1"
         "26.2" -> "26.2"
         "26.3" -> "26.3"
+        "26.4" -> "26.4-snapshot"
         else -> TARGET_VERSION
     }
 
@@ -14,23 +15,31 @@ object BuildConfig {
         "26.1" -> "26.1.0.19-beta"
         "26.2" -> "26.2.0.88"
         "26.3" -> "26.3.0.12-beta"
-        else -> "26.3.0.12-beta"
+        "26.4" -> "26.4.0.5-beta"
+        else -> "26.4.0.5-beta"
     }
 
-    val FABRIC_LOADER_VERSION: String = "0.19.3"
+    val FABRIC_LOADER_VERSION: String = "0.19.4"
 
     val FABRIC_API_VERSION: String = when (TARGET_VERSION) {
         "26.1" -> "0.145.1+26.1"
         "26.2" -> "0.161.0+26.2"
         "26.3" -> "0.160.5+26.3"
-        else -> "0.160.5+26.3"
+        "26.4" -> "0.165.0+26.4"
+        else -> "0.165.0+26.4"
+    }
+
+    val LWJGL_VERSION: String = when (TARGET_VERSION) {
+        "26.1", "26.2" -> "3.4.1"
+        "26.3" -> "3.4.3"
+        else -> "3.4.4"
     }
 
     val MINECRAFT_DEPENDENCY: String = "$MINECRAFT_VERSION.x"
     val SUPPORT_FRAPI : Boolean = true
 
     // https://semver.org/
-    val MOD_VERSION: String = "0.9.3-alpha.1"
+    val MOD_VERSION: String = "0.9.4-alpha.1"
 
     val MINECRAFT_VERSION_SHORT: String = MINECRAFT_VERSION
             .replace("-snapshot-", "s")
