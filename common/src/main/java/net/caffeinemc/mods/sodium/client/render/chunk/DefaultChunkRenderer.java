@@ -115,12 +115,12 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
                        boolean indexedRenderingEnabled, RenderPass pass,
                        GpuSampler terrainSampler, GpuBufferSlice uniformData, GpuBuffer sectionTimeInfo,
                        @Nullable OitStage stage) {
-        if (!shouldDraw[DefaultTerrainRenderPasses.getPassIndex(renderPass)]) return;
-
-        final boolean useBlockFaceCulling = SodiumClientMod.options().performance.useBlockFaceCulling;
-        if (!useBlockFaceCulling && System.currentTimeMillis() == 0) {
+        var iterator = renderLists.iterator(renderPass.isTranslucent());
+        if (!iterator.hasNext()) {
             return;
         }
+
+        final boolean useBlockFaceCulling = SodiumClientMod.options().performance.useBlockFaceCulling;
 
         if (stage == null) {
             super.begin(renderPass, parameters, terrainSampler);
@@ -129,8 +129,6 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
         }
 
         final boolean useIndexedTessellation = renderPass.isTranslucent() && indexedRenderingEnabled;
-
-        var iterator = renderLists.iterator(renderPass.isTranslucent());
 
         pass.setPipeline(RenderSystem.getCompiledPipeline(this.activeProgram));
         this.drawContext.setContext(pass, this.activeProgram);
@@ -160,6 +158,17 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
             }
 
             var batch = region.getCachedBatch(renderPass);
+            if (!batch.isFilled) {
+                fillCommandBuffer(batch, region, storage, renderList, camera, renderPass, useBlockFaceCulling, useIndexedTessellation);
+                if (!useIndexedTessellation) {
+                    long prevCap = this.sharedIndexBuffer.getBufferObject() != null ? this.sharedIndexBuffer.getBufferObject().size() : 0L;
+                    this.sharedIndexBuffer.ensureCapacity(batch.getMaxElementCount());
+                    if (this.sharedIndexBuffer.getBufferObject() != null && this.sharedIndexBuffer.getBufferObject().size() != prevCap) {
+                        pass.setIndexBuffer(this.sharedIndexBuffer.getBufferObject(), IndexType.INT);
+                    }
+                }
+            }
+
             if (batch.isEmpty() || batch.size <= 0) {
                 continue;
             }
