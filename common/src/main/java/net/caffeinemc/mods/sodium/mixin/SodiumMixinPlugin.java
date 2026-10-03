@@ -56,14 +56,10 @@ public class SodiumMixinPlugin implements IMixinConfigPlugin {
     static {
         boolean present = false;
         try {
-            Class.forName("com.mojang.blaze3d.vertex.VertexFormat");
-            present = true;
-        } catch (Throwable ignored) {
-            try {
-                Class.forName("com.mojang.renderpearl.api.vertex.VertexFormat");
-                present = true;
-            } catch (Throwable ignored2) {}
-        }
+            var loader = SodiumMixinPlugin.class.getClassLoader();
+            present = loader.getResource("com/mojang/blaze3d/vertex/VertexFormat.class") != null
+                    || loader.getResource("com/mojang/renderpearl/api/vertex/VertexFormat.class") != null;
+        } catch (Throwable ignored) {}
         HAS_RENDERPEARL_VERTEX_FORMAT = present;
     }
 
