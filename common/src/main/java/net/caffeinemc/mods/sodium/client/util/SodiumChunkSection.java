@@ -3,7 +3,7 @@ package net.caffeinemc.mods.sodium.client.util;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.renderpearl.api.pipeline.IndexType;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.renderpearl.api.textures.GpuSampler;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer;
@@ -31,19 +31,12 @@ public class SodiumChunkSection extends ChunkSectionsToRender {
     }
 
     @Override
-    protected void render(ChunkSectionLayer layer, RenderPass renderPass, @Nullable GpuBuffer defaultIndexBuffer, @Nullable IndexType defaultIndexType, @Nullable RenderPipeline renderPipelineOverride, @Nullable RenderPipeline renderPipelineOverrideMultidraw) {
+    protected void render(ChunkSectionLayer layer, RenderPass renderPass, @Nullable GpuBuffer defaultIndexBuffer, @Nullable IndexType defaultIndexType, boolean improvedFog, @Nullable RenderPipeline renderPipelineOverride, @Nullable RenderPipeline renderPipelineOverrideMultidraw) {
         throw new IllegalStateException("Not possible?");
     }
 
     @Override
-    public void renderGroup(ChunkSectionLayerGroup group, RenderPass renderPass, GpuSampler sampler, GpuTextureView atlas, boolean renderWireframeTerrain) {
+    public void renderGroup(ChunkSectionLayerGroup group, RenderPass renderPass, GpuSampler sampler, GpuTextureView atlas, ChunkSectionsToRender.ImprovedFogTextures fogTextures, boolean renderWireframeTerrain) {
         this.renderer.drawChunkLayer(renderPass, group, this.matrices, this.x, this.y, this.z, sampler, null);
-    }
-
-    @Override
-    public void renderOit(GpuSampler sampler, OitStage stage, OitRenderPassProvider.Parameters params, GpuTextureView atlas, GpuTextureView lightmap) {
-        try (RenderPass renderPass = OitRenderPassProvider.createRenderPass(stage, () -> "Terrain (Sodium)", params)) {
-            this.renderer.drawChunkLayer(renderPass, ChunkSectionLayerGroup.TRANSLUCENT, this.matrices, this.x, this.y, this.z, sampler, stage);
-        }
     }
 }

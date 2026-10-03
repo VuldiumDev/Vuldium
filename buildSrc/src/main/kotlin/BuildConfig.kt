@@ -7,7 +7,7 @@ object BuildConfig {
         "26.1" -> "26.1"
         "26.2" -> "26.2"
         "26.3" -> "26.3"
-        "26.4" -> System.getProperty("mc.snapshot") ?: "26.3"
+        "26.4" -> System.getProperty("mc.snapshot") ?: "26.4-snapshot-2"
         else -> TARGET_VERSION
     }
 
@@ -19,13 +19,13 @@ object BuildConfig {
         else -> "26.3.0.12-beta"
     }
 
-    val FABRIC_LOADER_VERSION: String = "0.19.4"
+    val FABRIC_LOADER_VERSION: String = "0.19.5"
 
     val FABRIC_API_VERSION: String = when (TARGET_VERSION) {
         "26.1" -> "0.145.1+26.1"
         "26.2" -> "0.161.0+26.2"
         "26.3" -> "0.160.5+26.3"
-        "26.4" -> "0.160.5+26.3"
+        "26.4" -> "0.161.2+26.4"
         else -> "0.160.5+26.3"
     }
 

@@ -19,10 +19,6 @@ import java.lang.management.ManagementFactory;
 
 @Mixin(DebugEntryMemory.class)
 public class DebugEntryMemoryMixin {
-    @Shadow
-    @Final
-    private static Identifier GROUP;
-
     @Unique
     private static String getNativeMemoryString() {
         return "Off-Heap: +" + MathUtil.toMib(getNativeMemoryUsage()) + "MB";
@@ -39,6 +35,6 @@ public class DebugEntryMemoryMixin {
                                    LevelChunk clientChunk,
                                    LevelChunk serverChunk,
                                    CallbackInfo ci) {
-        displayer.addToGroup(GROUP, getNativeMemoryString());
+        displayer.addToGroup(net.minecraft.client.gui.components.debug.DebugGroups.MEMORY, getNativeMemoryString());
     }
 }

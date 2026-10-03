@@ -17,7 +17,7 @@ public abstract class ChunkSectionsToRenderMixin {
     @Inject(method = "renderGroup(Lnet/minecraft/client/renderer/chunk/ChunkSectionLayerGroup;Lcom/mojang/renderpearl/api/commands/RenderPass;Lcom/mojang/renderpearl/api/textures/GpuSampler;Lcom/mojang/renderpearl/api/textures/GpuTextureView;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender$ImprovedFogTextures;Z)V", at = @At("HEAD"), cancellable = true, require = 0)
     private void sodium$renderGroup264(ChunkSectionLayerGroup group, RenderPass renderPass, GpuSampler sampler, GpuTextureView atlas, @Coerce Object fogTextures, boolean renderWireframeTerrain, CallbackInfo ci) {
         if ((Object) this instanceof SodiumChunkSection sodiumChunkSection) {
-            sodiumChunkSection.renderGroup(group, renderPass, sampler, atlas, renderWireframeTerrain);
+            sodiumChunkSection.renderGroup(group, renderPass, sampler, atlas, (ChunkSectionsToRender.ImprovedFogTextures) fogTextures, renderWireframeTerrain);
             ci.cancel();
         }
     }

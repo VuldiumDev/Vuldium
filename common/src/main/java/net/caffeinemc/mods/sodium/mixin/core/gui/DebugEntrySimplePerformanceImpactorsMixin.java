@@ -17,6 +17,7 @@ public class DebugEntrySimplePerformanceImpactorsMixin {
     @Inject(method = "display", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;isChunkRenderingUsingMultiDrawIndirect()Z"), cancellable = true)
     private void sodium$replace(DebugScreenDisplayer displayer, Level serverOrClientLevel, LevelChunk clientChunk, LevelChunk serverChunk, CallbackInfo ci) {
         ci.cancel();
-        displayer.addLine(String.format(Locale.ROOT, "Terrain Rendering: %s", DrawBackend.BACKEND.getName()));
+        displayer.addToGroup(net.minecraft.client.gui.components.debug.DebugGroups.PERFORMANCE_IMPACTORS,
+                String.format(Locale.ROOT, "Terrain Rendering: %s", DrawBackend.BACKEND.getName()));
     }
 }

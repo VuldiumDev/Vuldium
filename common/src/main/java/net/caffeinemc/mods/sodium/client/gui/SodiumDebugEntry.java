@@ -3,15 +3,16 @@ package net.caffeinemc.mods.sodium.client.gui;
 import net.caffeinemc.mods.sodium.client.SodiumClientMod;
 import net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.components.debug.DebugGroup;
+import net.minecraft.client.gui.components.debug.DebugGroups;
 import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.gui.components.debug.DebugScreenEntry;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jspecify.annotations.Nullable;
 
 public class SodiumDebugEntry implements DebugScreenEntry {
-    private static final Identifier DEBUG_GROUP = Identifier.fromNamespaceAndPath("sodium", "debug_group");
+    private static final DebugGroup DEBUG_GROUP = DebugGroups.CHUNK_RENDERING;
     private final boolean verbose;
 
     public SodiumDebugEntry(boolean verbose) {

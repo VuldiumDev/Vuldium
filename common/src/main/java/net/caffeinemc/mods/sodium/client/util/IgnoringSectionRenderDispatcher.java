@@ -60,7 +60,6 @@ public class IgnoringSectionRenderDispatcher extends SectionRenderDispatcher {
 
     }
 
-    @Override
     public String getStats() {
         return "None";
     }
