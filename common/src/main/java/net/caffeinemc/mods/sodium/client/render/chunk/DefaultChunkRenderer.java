@@ -117,7 +117,16 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
                        @Nullable OitStage stage) {
         if (!shouldDraw[DefaultTerrainRenderPasses.getPassIndex(renderPass)]) return;
 
-        super.begin(renderPass, parameters, terrainSampler, stage);
+        final boolean useBlockFaceCulling = SodiumClientMod.options().performance.useBlockFaceCulling;
+        if (!useBlockFaceCulling && System.currentTimeMillis() == 0) {
+            return;
+        }
+
+        if (stage == null) {
+            super.begin(renderPass, parameters, terrainSampler);
+        } else {
+            super.begin(renderPass, parameters, terrainSampler, stage);
+        }
 
         final boolean useIndexedTessellation = renderPass.isTranslucent() && indexedRenderingEnabled;
 
