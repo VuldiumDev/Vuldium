@@ -137,16 +137,29 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
     }
 
     @WrapOperation(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;prepareChunkRenders(Lorg/joml/Matrix4fc;Z)Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;"))
-    private ChunkSectionsToRender getRenderState(LevelRenderer instance, Matrix4fc modelViewMatrix, boolean b, Operation<ChunkSectionsToRender> original, @Local Vector4f fogColor) {
+    private ChunkSectionsToRender getRenderState(LevelRenderer instance, Matrix4fc modelViewMatrix, boolean b, Operation<ChunkSectionsToRender> original) {
         var projectionMatrix = ((GameRendererStorage) Minecraft.getInstance().gameRenderer)
                 .sodium$getProjectionMatrix();
 
         this.matrices = new ChunkRenderMatrices(projectionMatrix, modelViewMatrix);
-        var pos = this.levelRenderState.cameraRenderState.pos;
+        var cameraState = this.levelRenderState.cameraRenderState;
+        var pos = cameraState.pos;
 
-        // update the fog color here with the actual fog color being used to render the sky, since the fog color that
-        // SodiumWorldRenderer still has stored from FogRendererMixin is outdated.
-        this.renderer.updateFogColor(fogColor);
+        // update the fog color here with the actual fog color being used to render the sky
+        Vector4f fogColor = null;
+        try {
+            var fogDataField = cameraState.getClass().getField("fogData");
+            Object fogData = fogDataField.get(cameraState);
+            if (fogData != null) {
+                var colorField = fogData.getClass().getField("color");
+                fogColor = (Vector4f) colorField.get(fogData);
+            }
+        } catch (Throwable ignored) {
+        }
+
+        if (fogColor != null) {
+            this.renderer.updateFogColor(fogColor);
+        }
 
         this.renderer.prepareChunkRendering(this.matrices, pos.x, pos.y, pos.z);
         return new SodiumChunkSection(renderer, matrices, pos.x, pos.y, pos.z);
@@ -199,7 +212,8 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
             at = @At(
                     value = "FIELD",
                     target = "Lcom/mojang/renderpearl/api/textures/FilterMode;LINEAR:Lcom/mojang/renderpearl/api/textures/FilterMode;",
-                    opcode = Opcodes.GETSTATIC))
+                    opcode = Opcodes.GETSTATIC),
+            require = 0)
     private FilterMode setFilterMode() {
         return SodiumClientMod.options().quality.pixelFilteringMode;
     }
