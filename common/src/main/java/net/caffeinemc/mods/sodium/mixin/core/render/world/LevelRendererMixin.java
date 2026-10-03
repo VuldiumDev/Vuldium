@@ -80,10 +80,7 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
     @Shadow
     @Final
     private SectionOcclusionGraph sectionOcclusionGraph;
-    @Mutable
-    @Shadow
-    @Final
-    private boolean multiDrawIndirectAvailable;
+
     @Unique
     private SodiumWorldRenderer renderer;
 
@@ -119,7 +116,6 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
                       CallbackInfo ci) {
         STATIC_MAP = new EnumMap<>(ChunkSectionLayer.class);
         this.renderer = new SodiumWorldRenderer(Minecraft.getInstance());
-        this.multiDrawIndirectAvailable = false;
     }
 
     /**
