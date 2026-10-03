@@ -83,24 +83,32 @@ public class SodkamGpuCuller implements AutoCloseable {
     private boolean isClosed = false;
 
     public static SodkamGpuCuller create(SodkamDeviceContext context, int initialMaxChunks) {
+        return create(context, initialMaxChunks, VK10.VK_NULL_HANDLE);
+    }
+
+    public static SodkamGpuCuller create(SodkamDeviceContext context, int initialMaxChunks, long pipelineCache) {
         try (SodkamShaderModule module = SodkamShaderModule.fromResource(
                 context.getLogicalDevice(),
                 VK10.VK_SHADER_STAGE_COMPUTE_BIT,
                 "/assets/sodium/shaders/compute/chunk_cull.spv")) {
-            return new SodkamGpuCuller(context, module, initialMaxChunks);
+            return new SodkamGpuCuller(context, module, initialMaxChunks, pipelineCache);
         } catch (java.io.IOException e) {
             throw new RuntimeException("Не удалось загрузить SPIR-V шейдер chunk_cull.spv", e);
         }
     }
 
     public SodkamGpuCuller(SodkamDeviceContext context, SodkamShaderModule cullComputeShader, int initialMaxChunks) {
+        this(context, cullComputeShader, initialMaxChunks, VK10.VK_NULL_HANDLE);
+    }
+
+    public SodkamGpuCuller(SodkamDeviceContext context, SodkamShaderModule cullComputeShader, int initialMaxChunks, long pipelineCache) {
         this.context = context;
         this.device = context.getLogicalDevice();
         this.sync2 = new SodkamSync2(context);
         this.maxChunks = Math.max(initialMaxChunks, DEFAULT_MAX_CHUNKS);
 
         this.initDescriptorLayout();
-        this.initPipeline(cullComputeShader);
+        this.initPipeline(cullComputeShader, pipelineCache);
         this.initBuffers(this.maxChunks);
         this.initDescriptorPoolAndSet();
         this.updateDescriptorSets();
@@ -146,7 +154,7 @@ public class SodkamGpuCuller implements AutoCloseable {
         }
     }
 
-    private void initPipeline(SodkamShaderModule cullComputeShader) {
+    private void initPipeline(SodkamShaderModule cullComputeShader, long pipelineCache) {
         try (MemoryStack stack = MemoryStack.stackPush()) {
             VkPushConstantRange.Buffer pushConstants = VkPushConstantRange.calloc(1, stack)
                     .stageFlags(VK10.VK_SHADER_STAGE_COMPUTE_BIT)
@@ -174,7 +182,7 @@ public class SodkamGpuCuller implements AutoCloseable {
                     .layout(this.computePipelineLayout);
 
             LongBuffer pPipeline = stack.mallocLong(1);
-            res = VK10.vkCreateComputePipelines(this.device, VK10.VK_NULL_HANDLE, pipelineInfo, null, pPipeline);
+            res = VK10.vkCreateComputePipelines(this.device, pipelineCache, pipelineInfo, null, pPipeline);
             if (res != VK10.VK_SUCCESS) {
                 throw new IllegalStateException("Ошибка компиляции VkComputePipeline для Culler: " + res);
             }

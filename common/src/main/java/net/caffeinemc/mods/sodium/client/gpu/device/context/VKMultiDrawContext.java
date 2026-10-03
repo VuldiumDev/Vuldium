@@ -8,7 +8,7 @@ public class VKMultiDrawContext extends VKDrawContext {
 
     @Override
     public void delete() {
-
+        super.delete();
     }
 
     @Override

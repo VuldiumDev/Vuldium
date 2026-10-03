@@ -18,6 +18,8 @@ import java.nio.ByteBuffer;
 public abstract class VKDrawContext extends DrawContext {
     private VkCommandBuffer commandBuffer;
     private long pipelineLayout;
+    private final ByteBuffer pushConstantBuffer = MemoryUtil.memAlloc(DefaultChunkRenderer.PUSH_CONSTANT_RANGE);
+    private final long pushConstantAddr = MemoryUtil.memAddress(this.pushConstantBuffer);
 
     @Override
     public void setContext(RenderPass pass, RenderPipeline pipeline) {
@@ -35,17 +37,19 @@ public abstract class VKDrawContext extends DrawContext {
     @Override
     public void pushConstants(float x, float y, float z, int currentTime, int regionId) {
         if (this.commandBuffer != null && this.pipelineLayout != 0L) {
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                ByteBuffer memory = stack.malloc(DefaultChunkRenderer.PUSH_CONSTANT_RANGE);
-                long addr = MemoryUtil.memAddress(memory);
-                MemoryUtil.memPutFloat(addr, x);
-                MemoryUtil.memPutFloat(addr + 4, y);
-                MemoryUtil.memPutFloat(addr + 8, z);
-                MemoryUtil.memPutInt(addr + 12, currentTime);
-                MemoryUtil.memPutInt(addr + 16, regionId);
+            long addr = this.pushConstantAddr;
+            MemoryUtil.memPutFloat(addr, x);
+            MemoryUtil.memPutFloat(addr + 4, y);
+            MemoryUtil.memPutFloat(addr + 8, z);
+            MemoryUtil.memPutInt(addr + 12, currentTime);
+            MemoryUtil.memPutInt(addr + 16, regionId);
 
-                VK12.vkCmdPushConstants(this.commandBuffer, this.pipelineLayout, VK10.VK_SHADER_STAGE_ALL_GRAPHICS, 0, memory);
-            }
+            VK10.vkCmdPushConstants(this.commandBuffer, this.pipelineLayout, VK10.VK_SHADER_STAGE_ALL_GRAPHICS, 0, this.pushConstantBuffer);
         }
+    }
+
+    @Override
+    public void delete() {
+        MemoryUtil.memFree(this.pushConstantBuffer);
     }
 }

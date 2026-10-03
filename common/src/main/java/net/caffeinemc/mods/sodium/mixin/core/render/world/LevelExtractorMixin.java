@@ -54,6 +54,21 @@ public class LevelExtractorMixin {
         this.renderer = ((LevelRendererExtension) Minecraft.getInstance().levelRenderer).sodium$getWorldRenderer();
     }
 
+    @Inject(method = "isEntityVisible", at = @At("HEAD"), cancellable = true)
+    private void sodium$cullEntityEarly(net.minecraft.world.entity.Entity entity,
+                                        Frustum frustum,
+                                        double camX,
+                                        double camY,
+                                        double camZ,
+                                        org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+        if (this.renderer != null) {
+            net.minecraft.world.phys.AABB bb = entity.getBoundingBox();
+            if (!this.renderer.isBoxVisible(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ)) {
+                cir.setReturnValue(false);
+            }
+        }
+    }
+
     @Inject(method = "extractVisibleBlockEntities", at = @At("HEAD"), cancellable = true, require = 1)
     private void extractVisibleBlockEntities(Camera camera,
                                              float deltaPartialTick,

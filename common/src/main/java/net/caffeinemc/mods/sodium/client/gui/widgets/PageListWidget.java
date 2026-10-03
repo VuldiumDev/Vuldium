@@ -224,6 +224,11 @@ public class PageListWidget extends AbstractScrollable {
         private static final Identifier ICON_QUALITY = Identifier.fromNamespaceAndPath("sodium", "textures/gui/icons/quality.png");
         private static final Identifier ICON_PERFORMANCE = Identifier.fromNamespaceAndPath("sodium", "textures/gui/icons/performance.png");
         private static final Identifier ICON_VULDIUM = Identifier.fromNamespaceAndPath("sodium", "textures/gui/icons/vuldium.png");
+        private static final Identifier ICON_ANIMATIONS = Identifier.fromNamespaceAndPath("sodium", "textures/gui/icons/animations.png");
+        private static final Identifier ICON_PARTICLES = Identifier.fromNamespaceAndPath("sodium", "textures/gui/icons/particles.png");
+        private static final Identifier ICON_DETAILS = Identifier.fromNamespaceAndPath("sodium", "textures/gui/icons/details.png");
+        private static final Identifier ICON_RENDER = Identifier.fromNamespaceAndPath("sodium", "textures/gui/icons/render.png");
+        private static final Identifier ICON_EXTRA = Identifier.fromNamespaceAndPath("sodium", "textures/gui/icons/extra.png");
         private static final Identifier ICON_DEFAULT = Identifier.fromNamespaceAndPath("sodium", "textures/gui/icons/default.png");
 
         private final Identifier iconTexture;
@@ -243,6 +248,16 @@ public class PageListWidget extends AbstractScrollable {
                 return ICON_PERFORMANCE;
             } else if (raw.contains("vuldium") || raw.contains("вульдиум") || raw.contains("vulkan") || raw.contains("содкам") || raw.contains("sodkam")) {
                 return ICON_VULDIUM;
+            } else if (raw.contains("anim") || raw.contains("анимац")) {
+                return ICON_ANIMATIONS;
+            } else if (raw.contains("partic") || raw.contains("частиц")) {
+                return ICON_PARTICLES;
+            } else if (raw.contains("detail") || raw.contains("детал")) {
+                return ICON_DETAILS;
+            } else if (raw.contains("render") || raw.contains("рендер") || raw.contains("прорисов")) {
+                return ICON_RENDER;
+            } else if (raw.contains("extra") || raw.contains("экстра") || raw.contains("дополн")) {
+                return ICON_EXTRA;
             }
             return ICON_DEFAULT;
         }

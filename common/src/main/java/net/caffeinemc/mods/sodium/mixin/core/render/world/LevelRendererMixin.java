@@ -58,6 +58,8 @@ import java.util.List;
 public abstract class LevelRendererMixin implements LevelRendererExtension {
     @Unique
     private static EnumMap<ChunkSectionLayer,Int2ObjectOpenHashMap<List<RenderPass.Draw<GpuBufferSlice[]>>>> STATIC_MAP;
+    @Unique
+    private static final GpuBufferSlice[] EMPTY_SLICES = new GpuBufferSlice[0];
 
     @Shadow
     @Final
@@ -150,7 +152,7 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
         this.renderer.updateFogColor(fogColor);
 
         this.renderer.prepareChunkRendering(this.matrices, pos.x, pos.y, pos.z);
-        ChunkSectionsToRender renderState = new ChunkSectionsToRender(null, new EnumMap<>(ChunkSectionLayer.class), 0, new GpuBufferSlice[0]);
+        ChunkSectionsToRender renderState = new ChunkSectionsToRender(null, STATIC_MAP, 0, EMPTY_SLICES);
         ((SodiumChunkSection) (Object) renderState).sodium$setRendering(this.renderer, this.matrices, pos.x, pos.y, pos.z);
         return renderState;
     }
@@ -187,7 +189,13 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
      */
     @Overwrite
     public boolean isSectionCompiledAndVisible(BlockPos pos) {
-        return this.renderer.isSectionReady(pos.getX() >> 4, pos.getY() >> 4, pos.getZ() >> 4);
+        int cx = pos.getX() >> 4;
+        int cy = pos.getY() >> 4;
+        int cz = pos.getZ() >> 4;
+        if (!this.renderer.isSectionReady(cx, cy, cz)) {
+            return false;
+        }
+        return this.renderer.isBoxVisible(cx << 4, cy << 4, cz << 4, (cx + 1) << 4, (cy + 1) << 4, (cz + 1) << 4);
     }
 
     @Inject(method = "invalidateCompiledGeometry", at = @At("HEAD"), cancellable = true)

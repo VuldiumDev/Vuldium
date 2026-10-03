@@ -11,12 +11,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SkyRenderer.class)
 public class SkyRendererMixin {
-    @Inject(method = "renderSkyDisc", at = @At("HEAD"), cancellable = true)
-    private void sodium$cancelSkyDisc(int color, CallbackInfo ci) {
-        if (!SodiumClientMod.options().details.sky) {
-            ci.cancel();
-        }
-    }
+    // NOTE: In Minecraft 26.2, cancelling renderSkyDisc leaves the framebuffer with the raw fog clear color
+    // (solid red-brown during sunrise/sunset, solid dark slate at night), creating a severe visual glitch.
+    // The sky disc is a lightweight 16-vertex mesh that must always be drawn.
 
     @Inject(method = "renderSunriseAndSunset", at = @At("HEAD"), cancellable = true)
     private void sodium$cancelSunrise(PoseStack poseStack, float angle, int color, CallbackInfo ci) {

@@ -32,3 +32,6 @@ neoforge/runs
 
 # Kotlin compiler working directory
 .kotlin
+
+scratch/
+*.class

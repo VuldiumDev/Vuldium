@@ -15,6 +15,7 @@ public class GLDrawContext extends DrawContext {
     private int offsetLoc = -1;
     private int timeLoc = -1;
     private int idLoc = -1;
+    private boolean initialized = false;
 
     @Override
     public void setContext(RenderPass pass, RenderPipeline pipeline) {
@@ -23,11 +24,13 @@ public class GLDrawContext extends DrawContext {
         this.offsetLoc = -1;
         this.timeLoc = -1;
         this.idLoc = -1;
+        this.initialized = false;
 
         this.bindTargetProgram();
     }
 
     private void bindTargetProgram() {
+        this.initialized = true;
         if (this.pass != null) {
             var backend = ((RenderPassAccessor) this.pass).sodium$getBackend();
             if (backend instanceof SodiumGlRenderPass glPass) {
@@ -65,7 +68,7 @@ public class GLDrawContext extends DrawContext {
 
     @Override
     public void pushConstants(float x, float y, float z, int currentTime, int regionId) {
-        if (this.currentProgram <= 0 || this.offsetLoc == -1) {
+        if (!this.initialized) {
             this.bindTargetProgram();
             if (this.currentProgram <= 0) {
                 this.updateLocations();

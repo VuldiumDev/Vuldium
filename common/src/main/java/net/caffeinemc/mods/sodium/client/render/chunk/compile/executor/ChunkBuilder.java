@@ -35,7 +35,7 @@ public class ChunkBuilder {
             WorkerRunnable worker = new WorkerRunnable("Chunk Render Task Executor #" + i, context);
 
             Thread thread = new Thread(worker, "Chunk Render Task Executor #" + i);
-            thread.setPriority(Math.max(0, Thread.NORM_PRIORITY - 2));
+            thread.setPriority(Math.max(1, Thread.NORM_PRIORITY - 1));
             thread.start();
 
             this.threads.add(thread);
@@ -110,7 +110,8 @@ public class ChunkBuilder {
      * thread.
      */
     private static int getOptimalThreadCount() {
-        return Mth.clamp(Math.max(getMaxThreadCount() / 3, getMaxThreadCount() - 6), 1, 10);
+        int threads = getMaxThreadCount();
+        return Mth.clamp(threads - 2, 2, 18);
     }
 
     private static int getThreadCount() {

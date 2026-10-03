@@ -182,11 +182,11 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
                 pass.setIndexBuffer(indexBuffer, IndexType.INT);
             }
 
-            var geometryBuffer = resources.getGeometryBuffer();
-            if (geometryBuffer == null) {
+            var geometrySlice = resources.getGeometrySlice();
+            if (geometrySlice == null) {
                 continue;
             }
-            pass.setVertexBuffer(0, geometryBuffer.slice());
+            pass.setVertexBuffer(0, geometrySlice);
 
             float x = (float) ((double) region.getOriginX() - camera.x);
             float y = (float) ((double) region.getOriginY() - camera.y);

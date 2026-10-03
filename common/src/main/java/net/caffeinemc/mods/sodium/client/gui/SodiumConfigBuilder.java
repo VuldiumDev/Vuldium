@@ -24,6 +24,7 @@ import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.UpscaleQual
 import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.rt.RayTracingMode;
 import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.latency.LowLatencyMode;
 import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.vrs.VrsMode;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.*;
 import net.minecraft.client.renderer.texture.MipmapStrategy;
 import net.minecraft.client.renderer.texture.ReloadableTexture;
@@ -114,11 +115,15 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
 
     private static ModOptionsBuilder createModOptionsBuilder(ConfigBuilder builder) {
         return builder.registerOwnModOptions()
-                .setName("Sodkam")
+                .setName("Vuldium")
                 .setIcon(SODIUM_ICON)
                 .formatVersion(version -> {
-                    var result = version.splitWithDelimiters("\\+", 2);
-                    return result[0];
+                    String base = "0.9.3";
+                    if (version != null && !version.isEmpty()) {
+                        base = version.split("[+-]")[0];
+                    }
+                    String mcVersion = SharedConstants.getCurrentVersion().name();
+                    return base + "+" + mcVersion;
                 });
     }
 

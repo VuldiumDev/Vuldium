@@ -1,15 +1,16 @@
 <img src="common/src/main/resources/sodium-icon.png" width="128">
 
-# Sodium
+# Vuldium
 
-Sodium is a powerful rendering engine and optimization mod for the Minecraft client which improves frame rates and reduces
-micro-stutter, while fixing many graphical issues in Minecraft.
+**Vuldium** is a next-generation high-performance rendering engine and optimization suite for Minecraft, built for both **Vulkan** and modern **OpenGL**.
 
-**This mod is the result of thousands of hours of development, and is made possible thanks to players like you.** If you
-would like to show a token of your appreciation for my work, and help support the development of Sodium in the process,
-then consider [buying me a coffee](https://caffeinemc.net/donate).
-
-<a href="https://caffeinemc.net/donate"><img src="https://storage.ko-fi.com/cdn/kofi2.png?v=3" width="180"/></a>
+### ⚡ Key Features
+- **Multi-AI Frame Generation (x2 / x3)**: Synthesizes high-fluidity intermediate frames directly in the swapchain for buttery smooth motion.
+- **AI & Spatial Upscaling**: Native FSR, XeSS, and DLSS pipelines for crystal-clear resolution scaling.
+- **Zero-Allocation Chunk Pipelines**: Fully optimized hot-path chunk rendering with cached geometry and direct native command streams.
+- **Hardware Ray Tracing (VK_KHR_ray_query)**: Real-time voxel RTAO and contact shadows.
+- **Hi-Z & Mesh Shader Culling**: GPU-driven occlusion culling eliminating invisible geometry before rasterization.
+- **Full Mod Compatibility**: Integrated support for Fabric and NeoForge with FRAPI and OptiFine-like configuration tabs (Animations, Particles, Details, Render, Extra).
 
 ---
 

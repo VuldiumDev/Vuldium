@@ -64,28 +64,30 @@ public class MinecraftMixin {
         var mode = SodiumClientMod.options().sodkam.frameGen;
         int multiplier = mode.getMultiplier();
         if (multiplier > 1 && !surface.isSuboptimal()) {
-            int extraFrames = multiplier - 1;
-            for (int i = 0; i < extraFrames; i++) {
-                try {
-                    if (surface.isSuboptimal()) {
-                        break;
-                    }
-                    surface.acquireNextTexture();
-                    if (!surface.isAcquired()) {
-                        break;
-                    }
-                    var main = Minecraft.getInstance().gameRenderer.mainRenderTarget();
-                    if (main != null && main.getColorTextureView() != null) {
-                        var encoder = com.mojang.blaze3d.systems.RenderSystem.getDevice().createCommandEncoder();
-                        surface.blitFromTexture(encoder, main.getColorTextureView());
+            var main = Minecraft.getInstance().gameRenderer.mainRenderTarget();
+            var colorView = main != null ? main.getColorTextureView() : null;
+            if (colorView != null) {
+                var device = com.mojang.blaze3d.systems.RenderSystem.getDevice();
+                int extraFrames = multiplier - 1;
+                for (int i = 0; i < extraFrames; i++) {
+                    try {
+                        if (surface.isSuboptimal()) {
+                            break;
+                        }
+                        surface.acquireNextTexture();
+                        if (!surface.isAcquired()) {
+                            break;
+                        }
+                        var encoder = device.createCommandEncoder();
+                        surface.blitFromTexture(encoder, colorView);
                         encoder.submit();
+                        if (surface.isAcquired()) {
+                            surface.present();
+                            this.frames++;
+                        }
+                    } catch (Throwable ignored) {
+                        break;
                     }
-                    if (surface.isAcquired()) {
-                        surface.present();
-                        this.frames++;
-                    }
-                } catch (Throwable ignored) {
-                    break;
                 }
             }
         }

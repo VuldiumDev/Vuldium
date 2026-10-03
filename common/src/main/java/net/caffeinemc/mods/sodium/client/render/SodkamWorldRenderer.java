@@ -41,10 +41,13 @@ import org.lwjgl.vulkan.VkCommandBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.pipeline.SodkamPipelineCache;
+import net.caffeinemc.mods.sodium.client.services.PlatformRuntimeInformation;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Центральный архитектурный координатор конвейера Sodkam (SodkamWorldRenderer).
+ * Центральный архитектурный координатор конвейера Vuldium (SodkamWorldRenderer).
  *
  * Управляет полным покадровым жизненным циклом рендеринга воксельного мира
  * через 8 строго синхронизированных фаз (Phases 0–7) без гонок конвейера и без JNI-накладных расходов:
@@ -59,7 +62,7 @@ import java.util.List;
  * - Фаза 7 (UI Pass-through): возврат управления ванильному коду для отрисовки интерфейса (HUD, инвентарь, чат)
  */
 public class SodkamWorldRenderer implements AutoCloseable {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Sodkam/WorldRenderer");
+    private static final Logger LOGGER = LoggerFactory.getLogger("Vuldium/WorldRenderer");
 
     private static volatile SodkamWorldRenderer INSTANCE;
 
@@ -67,6 +70,7 @@ public class SodkamWorldRenderer implements AutoCloseable {
     private final SodkamSync2 sync2;
 
     // Подсистемы конвейера
+    private final SodkamPipelineCache pipelineCache;
     private final SodkamAtlasTextureUploader atlasUploader;
     private final SodkamGpuCuller gpuCuller;
     private final SodkamBlockEntityBatcher blockEntityBatcher;
@@ -137,8 +141,20 @@ public class SodkamWorldRenderer implements AutoCloseable {
         this.context = context;
         this.sync2 = new SodkamSync2(context);
 
+        Path cacheDir = PlatformRuntimeInformation.getInstance().getGameDirectory().resolve("vuldium_cache");
+        Path cacheFile = cacheDir.resolve("pipelines.bin");
+        this.pipelineCache = new SodkamPipelineCache(context.getLogicalDevice(), cacheFile);
+
+        try {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (this.pipelineCache != null) {
+                    this.pipelineCache.saveToDisk();
+                }
+            }, "Vuldium-PipelineCache-Save"));
+        } catch (Throwable ignored) {}
+
         this.atlasUploader = new SodkamAtlasTextureUploader(context);
-        this.gpuCuller = SodkamGpuCuller.create(context, 8192);
+        this.gpuCuller = SodkamGpuCuller.create(context, 8192, this.pipelineCache.getHandle());
         this.blockEntityBatcher = new SodkamBlockEntityBatcher(context, 4096);
         this.upscaleBridge = new SodkamUpscaleBridge(context);
         this.pushConstants = new SodkamPushConstants();
@@ -522,9 +538,16 @@ public class SodkamWorldRenderer implements AutoCloseable {
         if (this.simdRegionLoader != null) {
             this.simdRegionLoader.close();
         }
+        if (this.pipelineCache != null) {
+            this.pipelineCache.close();
+        }
 
         this.isClosed = true;
         LOGGER.info("VuldiumWorldRenderer успешно освобожден.");
+    }
+
+    public SodkamPipelineCache getPipelineCache() {
+        return this.pipelineCache;
     }
 
     public SodkamMeshUploader getMeshUploader() {

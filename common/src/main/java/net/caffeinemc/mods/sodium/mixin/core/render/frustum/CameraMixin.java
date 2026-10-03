@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Camera.class)
 public class CameraMixin {
+    private static final Vector3f AXIS = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
+
     /**
      * This fixes a bug causing nausea to not affect culling.
      */
@@ -22,7 +24,6 @@ public class CameraMixin {
 
         var player = Minecraft.getInstance().player;
         if (player == null) {
-            cir.setReturnValue(x);
             return;
         }
 
@@ -34,13 +35,8 @@ public class CameraMixin {
         if (spinningEffectIntensity > 0.0F) {
             float skew = 5.0F / (spinningEffectIntensity * spinningEffectIntensity + 5.0F) - spinningEffectIntensity * 0.04F;
             skew *= skew;
-            Vector3f axis = new Vector3f(0.0F, Mth.SQRT_OF_TWO / 2.0F, Mth.SQRT_OF_TWO / 2.0F);
-            float angle = 0.0F;
-            x.rotate(angle, axis);
             x.scale(1.0F / skew, 1.0F, 1.0F);
-            x.rotate(-angle, axis);
+            cir.setReturnValue(x);
         }
-        cir.setReturnValue(x);
-
     }
 }
