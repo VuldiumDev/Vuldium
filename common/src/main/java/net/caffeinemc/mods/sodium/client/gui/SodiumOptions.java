@@ -26,6 +26,12 @@ public class SodiumOptions {
     public final AdvancedSettings advanced = new AdvancedSettings();
     public final SodkamSettings sodkam = new SodkamSettings();
 
+    public final AnimationSettings animations = new AnimationSettings();
+    public final ParticleSettings particles = new ParticleSettings();
+    public final DetailSettings details = new DetailSettings();
+    public final RenderSettings render = new RenderSettings();
+    public final ExtraSettings extra = new ExtraSettings();
+
     public final DebugSettings debug = new DebugSettings();
     public final NotificationSettings notifications = new NotificationSettings();
 
@@ -88,6 +94,56 @@ public class SodiumOptions {
         public boolean variableRateShading = false;
         public boolean asyncComputeParticles = true;
         public boolean virtualTexturing = false;
+    }
+
+    public static class AnimationSettings {
+        public boolean allAnimations = true;
+        public boolean animatedWater = true;
+        public boolean animatedLava = true;
+        public boolean animatedFire = true;
+        public boolean animatedPortal = true;
+        public boolean animatedRedstone = true;
+        public boolean animatedExplosion = true;
+        public boolean animatedFlame = true;
+        public boolean animatedSmoke = true;
+    }
+
+    public static class ParticleSettings {
+        public boolean rainSplash = true;
+        public boolean smoke = true;
+        public boolean blockBreak = true;
+        public boolean fireworks = true;
+        public boolean potions = true;
+        public boolean explosions = true;
+        public boolean drips = true;
+        public boolean other = true;
+    }
+
+    public static class DetailSettings {
+        public boolean sky = true;
+        public boolean stars = true;
+        public boolean sunMoon = true;
+        public boolean weather = true;
+        public boolean vignette = true;
+        public boolean heldItemTooltips = true;
+    }
+
+    public static class RenderSettings {
+        public boolean fog = true;
+        public int fogDistance = 100;
+        public boolean staticEntities = true;
+        public int entityDistance = 100;
+        public boolean beaconBeams = true;
+    }
+
+    public static class ExtraSettings {
+        public boolean fpsHud = false;
+        public boolean coordsHud = false;
+        public boolean advancementToasts = true;
+        public boolean recipeToasts = true;
+        public boolean systemToasts = true;
+        public boolean clouds = true;
+        public int cloudHeight = 192;
     }
 
     public static class DebugSettings {

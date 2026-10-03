@@ -138,7 +138,12 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                 .addPage(this.buildGeneralPage(builder))
                 .addPage(this.buildQualityPage(builder))
                 .addPage(this.buildPerformancePage(builder))
-                .addPage(this.buildSodkamPage(builder));
+                .addPage(this.buildSodkamPage(builder))
+                .addPage(this.buildAnimationsPage(builder))
+                .addPage(this.buildParticlesPage(builder))
+                .addPage(this.buildDetailsPage(builder))
+                .addPage(this.buildRenderPage(builder))
+                .addPage(this.buildExtraPage(builder));
     }
 
     private OptionPageBuilder buildGeneralPage(ConfigBuilder builder) {
@@ -894,4 +899,395 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                 .setFlags(OptionFlag.REQUIRES_GAME_RESTART);
     }
 
+    private OptionPageBuilder buildAnimationsPage(ConfigBuilder builder) {
+        var page = builder.createOptionPage().setName(Component.translatable("sodium.options.pages.animations"));
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:animations.all_animations"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.animations.all_animations.name"))
+                                .setTooltip(Component.translatable("sodium.options.animations.all_animations.tooltip"))
+                                .setDefaultValue(DEFAULTS.animations.allAnimations)
+                                .setBinding(value -> this.sodiumOpts.animations.allAnimations = value, () -> this.sodiumOpts.animations.allAnimations)
+                                .setImpact(OptionImpact.HIGH)
+                )
+        );
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:animations.water"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.animations.water.name"))
+                                .setTooltip(Component.translatable("sodium.options.animations.water.tooltip"))
+                                .setDefaultValue(DEFAULTS.animations.animatedWater)
+                                .setBinding(value -> this.sodiumOpts.animations.animatedWater = value, () -> this.sodiumOpts.animations.animatedWater)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:animations.lava"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.animations.lava.name"))
+                                .setTooltip(Component.translatable("sodium.options.animations.lava.tooltip"))
+                                .setDefaultValue(DEFAULTS.animations.animatedLava)
+                                .setBinding(value -> this.sodiumOpts.animations.animatedLava = value, () -> this.sodiumOpts.animations.animatedLava)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:animations.fire"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.animations.fire.name"))
+                                .setTooltip(Component.translatable("sodium.options.animations.fire.tooltip"))
+                                .setDefaultValue(DEFAULTS.animations.animatedFire)
+                                .setBinding(value -> this.sodiumOpts.animations.animatedFire = value, () -> this.sodiumOpts.animations.animatedFire)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:animations.portal"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.animations.portal.name"))
+                                .setTooltip(Component.translatable("sodium.options.animations.portal.tooltip"))
+                                .setDefaultValue(DEFAULTS.animations.animatedPortal)
+                                .setBinding(value -> this.sodiumOpts.animations.animatedPortal = value, () -> this.sodiumOpts.animations.animatedPortal)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+        );
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:animations.redstone"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.animations.redstone.name"))
+                                .setTooltip(Component.translatable("sodium.options.animations.redstone.tooltip"))
+                                .setDefaultValue(DEFAULTS.animations.animatedRedstone)
+                                .setBinding(value -> this.sodiumOpts.animations.animatedRedstone = value, () -> this.sodiumOpts.animations.animatedRedstone)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:animations.explosion"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.animations.explosion.name"))
+                                .setTooltip(Component.translatable("sodium.options.animations.explosion.tooltip"))
+                                .setDefaultValue(DEFAULTS.animations.animatedExplosion)
+                                .setBinding(value -> this.sodiumOpts.animations.animatedExplosion = value, () -> this.sodiumOpts.animations.animatedExplosion)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:animations.flame"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.animations.flame.name"))
+                                .setTooltip(Component.translatable("sodium.options.animations.flame.tooltip"))
+                                .setDefaultValue(DEFAULTS.animations.animatedFlame)
+                                .setBinding(value -> this.sodiumOpts.animations.animatedFlame = value, () -> this.sodiumOpts.animations.animatedFlame)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:animations.smoke"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.animations.smoke.name"))
+                                .setTooltip(Component.translatable("sodium.options.animations.smoke.tooltip"))
+                                .setDefaultValue(DEFAULTS.animations.animatedSmoke)
+                                .setBinding(value -> this.sodiumOpts.animations.animatedSmoke = value, () -> this.sodiumOpts.animations.animatedSmoke)
+                                .setImpact(OptionImpact.LOW)
+                )
+        );
+
+        return page;
+    }
+
+    private OptionPageBuilder buildParticlesPage(ConfigBuilder builder) {
+        var page = builder.createOptionPage().setName(Component.translatable("sodium.options.pages.particles"));
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:particles.rain_splash"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.particles.rain_splash.name"))
+                                .setTooltip(Component.translatable("sodium.options.particles.rain_splash.tooltip"))
+                                .setDefaultValue(DEFAULTS.particles.rainSplash)
+                                .setBinding(value -> this.sodiumOpts.particles.rainSplash = value, () -> this.sodiumOpts.particles.rainSplash)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:particles.smoke"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.particles.smoke.name"))
+                                .setTooltip(Component.translatable("sodium.options.particles.smoke.tooltip"))
+                                .setDefaultValue(DEFAULTS.particles.smoke)
+                                .setBinding(value -> this.sodiumOpts.particles.smoke = value, () -> this.sodiumOpts.particles.smoke)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:particles.drips"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.particles.drips.name"))
+                                .setTooltip(Component.translatable("sodium.options.particles.drips.tooltip"))
+                                .setDefaultValue(DEFAULTS.particles.drips)
+                                .setBinding(value -> this.sodiumOpts.particles.drips = value, () -> this.sodiumOpts.particles.drips)
+                                .setImpact(OptionImpact.LOW)
+                )
+        );
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:particles.block_break"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.particles.block_break.name"))
+                                .setTooltip(Component.translatable("sodium.options.particles.block_break.tooltip"))
+                                .setDefaultValue(DEFAULTS.particles.blockBreak)
+                                .setBinding(value -> this.sodiumOpts.particles.blockBreak = value, () -> this.sodiumOpts.particles.blockBreak)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:particles.explosions"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.particles.explosions.name"))
+                                .setTooltip(Component.translatable("sodium.options.particles.explosions.tooltip"))
+                                .setDefaultValue(DEFAULTS.particles.explosions)
+                                .setBinding(value -> this.sodiumOpts.particles.explosions = value, () -> this.sodiumOpts.particles.explosions)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:particles.fireworks"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.particles.fireworks.name"))
+                                .setTooltip(Component.translatable("sodium.options.particles.fireworks.tooltip"))
+                                .setDefaultValue(DEFAULTS.particles.fireworks)
+                                .setBinding(value -> this.sodiumOpts.particles.fireworks = value, () -> this.sodiumOpts.particles.fireworks)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:particles.potions"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.particles.potions.name"))
+                                .setTooltip(Component.translatable("sodium.options.particles.potions.tooltip"))
+                                .setDefaultValue(DEFAULTS.particles.potions)
+                                .setBinding(value -> this.sodiumOpts.particles.potions = value, () -> this.sodiumOpts.particles.potions)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:particles.other"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.particles.other.name"))
+                                .setTooltip(Component.translatable("sodium.options.particles.other.tooltip"))
+                                .setDefaultValue(DEFAULTS.particles.other)
+                                .setBinding(value -> this.sodiumOpts.particles.other = value, () -> this.sodiumOpts.particles.other)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+        );
+
+        return page;
+    }
+
+    private OptionPageBuilder buildDetailsPage(ConfigBuilder builder) {
+        var page = builder.createOptionPage().setName(Component.translatable("sodium.options.pages.details"));
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:details.sky"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.details.sky.name"))
+                                .setTooltip(Component.translatable("sodium.options.details.sky.tooltip"))
+                                .setDefaultValue(DEFAULTS.details.sky)
+                                .setBinding(value -> this.sodiumOpts.details.sky = value, () -> this.sodiumOpts.details.sky)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:details.stars"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.details.stars.name"))
+                                .setTooltip(Component.translatable("sodium.options.details.stars.tooltip"))
+                                .setDefaultValue(DEFAULTS.details.stars)
+                                .setBinding(value -> this.sodiumOpts.details.stars = value, () -> this.sodiumOpts.details.stars)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:details.sun_moon"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.details.sun_moon.name"))
+                                .setTooltip(Component.translatable("sodium.options.details.sun_moon.tooltip"))
+                                .setDefaultValue(DEFAULTS.details.sunMoon)
+                                .setBinding(value -> this.sodiumOpts.details.sunMoon = value, () -> this.sodiumOpts.details.sunMoon)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:details.weather"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.details.weather.name"))
+                                .setTooltip(Component.translatable("sodium.options.details.weather.tooltip"))
+                                .setDefaultValue(DEFAULTS.details.weather)
+                                .setBinding(value -> this.sodiumOpts.details.weather = value, () -> this.sodiumOpts.details.weather)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+        );
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:details.vignette"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.details.vignette.name"))
+                                .setTooltip(Component.translatable("sodium.options.details.vignette.tooltip"))
+                                .setDefaultValue(DEFAULTS.details.vignette)
+                                .setBinding(value -> this.sodiumOpts.details.vignette = value, () -> this.sodiumOpts.details.vignette)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:details.held_item_tooltips"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.details.held_item_tooltips.name"))
+                                .setTooltip(Component.translatable("sodium.options.details.held_item_tooltips.tooltip"))
+                                .setDefaultValue(DEFAULTS.details.heldItemTooltips)
+                                .setBinding(value -> this.sodiumOpts.details.heldItemTooltips = value, () -> this.sodiumOpts.details.heldItemTooltips)
+                                .setImpact(OptionImpact.LOW)
+                )
+        );
+
+        return page;
+    }
+
+    private OptionPageBuilder buildRenderPage(ConfigBuilder builder) {
+        var page = builder.createOptionPage().setName(Component.translatable("sodium.options.pages.render"));
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:render.fog"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.render.fog.name"))
+                                .setTooltip(Component.translatable("sodium.options.render.fog.tooltip"))
+                                .setDefaultValue(DEFAULTS.render.fog)
+                                .setBinding(value -> this.sodiumOpts.render.fog = value, () -> this.sodiumOpts.render.fog)
+                                .setImpact(OptionImpact.HIGH)
+                )
+                .addOption(
+                        builder.createIntegerOption(Identifier.parse("sodium:render.fog_distance"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.render.fog_distance.name"))
+                                .setTooltip(Component.translatable("sodium.options.render.fog_distance.tooltip"))
+                                .setValueFormatter(ControlValueFormatterImpls.percentage())
+                                .setRange(50, 200, 10)
+                                .setDefaultValue(DEFAULTS.render.fogDistance)
+                                .setBinding(value -> this.sodiumOpts.render.fogDistance = value, () -> this.sodiumOpts.render.fogDistance)
+                                .setImpact(OptionImpact.MEDIUM)
+                )
+        );
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:render.static_entities"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.render.static_entities.name"))
+                                .setTooltip(Component.translatable("sodium.options.render.static_entities.tooltip"))
+                                .setDefaultValue(DEFAULTS.render.staticEntities)
+                                .setBinding(value -> this.sodiumOpts.render.staticEntities = value, () -> this.sodiumOpts.render.staticEntities)
+                                .setImpact(OptionImpact.HIGH)
+                )
+                .addOption(
+                        builder.createIntegerOption(Identifier.parse("sodium:render.entity_distance"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.render.entity_distance.name"))
+                                .setTooltip(Component.translatable("sodium.options.render.entity_distance.tooltip"))
+                                .setValueFormatter(ControlValueFormatterImpls.percentage())
+                                .setRange(50, 500, 25)
+                                .setDefaultValue(DEFAULTS.render.entityDistance)
+                                .setBinding(value -> {
+                                    this.sodiumOpts.render.entityDistance = value;
+                                    if (this.vanillaOpts != null) {
+                                        this.vanillaOpts.entityDistanceScaling().set(value / 100.0);
+                                    }
+                                }, () -> this.sodiumOpts.render.entityDistance)
+                                .setImpact(OptionImpact.HIGH)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:render.beacon_beams"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.render.beacon_beams.name"))
+                                .setTooltip(Component.translatable("sodium.options.render.beacon_beams.tooltip"))
+                                .setDefaultValue(DEFAULTS.render.beaconBeams)
+                                .setBinding(value -> this.sodiumOpts.render.beaconBeams = value, () -> this.sodiumOpts.render.beaconBeams)
+                                .setImpact(OptionImpact.LOW)
+                )
+        );
+
+        return page;
+    }
+
+    private OptionPageBuilder buildExtraPage(ConfigBuilder builder) {
+        var page = builder.createOptionPage().setName(Component.translatable("sodium.options.pages.extra"));
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:extra.fps_hud"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.extra.fps_hud.name"))
+                                .setTooltip(Component.translatable("sodium.options.extra.fps_hud.tooltip"))
+                                .setDefaultValue(DEFAULTS.extra.fpsHud)
+                                .setBinding(value -> this.sodiumOpts.extra.fpsHud = value, () -> this.sodiumOpts.extra.fpsHud)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:extra.coords_hud"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.extra.coords_hud.name"))
+                                .setTooltip(Component.translatable("sodium.options.extra.coords_hud.tooltip"))
+                                .setDefaultValue(DEFAULTS.extra.coordsHud)
+                                .setBinding(value -> this.sodiumOpts.extra.coordsHud = value, () -> this.sodiumOpts.extra.coordsHud)
+                                .setImpact(OptionImpact.LOW)
+                )
+        );
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:extra.advancement_toasts"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.extra.advancement_toasts.name"))
+                                .setTooltip(Component.translatable("sodium.options.extra.advancement_toasts.tooltip"))
+                                .setDefaultValue(DEFAULTS.extra.advancementToasts)
+                                .setBinding(value -> this.sodiumOpts.extra.advancementToasts = value, () -> this.sodiumOpts.extra.advancementToasts)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:extra.recipe_toasts"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.extra.recipe_toasts.name"))
+                                .setTooltip(Component.translatable("sodium.options.extra.recipe_toasts.tooltip"))
+                                .setDefaultValue(DEFAULTS.extra.recipeToasts)
+                                .setBinding(value -> this.sodiumOpts.extra.recipeToasts = value, () -> this.sodiumOpts.extra.recipeToasts)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:extra.system_toasts"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.extra.system_toasts.name"))
+                                .setTooltip(Component.translatable("sodium.options.extra.system_toasts.tooltip"))
+                                .setDefaultValue(DEFAULTS.extra.systemToasts)
+                                .setBinding(value -> this.sodiumOpts.extra.systemToasts = value, () -> this.sodiumOpts.extra.systemToasts)
+                                .setImpact(OptionImpact.LOW)
+                )
+        );
+
+        page.addOptionGroup(builder.createOptionGroup()
+                .addOption(
+                        builder.createBooleanOption(Identifier.parse("sodium:extra.clouds"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.extra.clouds.name"))
+                                .setTooltip(Component.translatable("sodium.options.extra.clouds.tooltip"))
+                                .setDefaultValue(DEFAULTS.extra.clouds)
+                                .setBinding(value -> this.sodiumOpts.extra.clouds = value, () -> this.sodiumOpts.extra.clouds)
+                                .setImpact(OptionImpact.LOW)
+                )
+                .addOption(
+                        builder.createIntegerOption(Identifier.parse("sodium:extra.cloud_height"))
+                                .setStorageHandler(this.sodiumStorage)
+                                .setName(Component.translatable("sodium.options.extra.cloud_height.name"))
+                                .setTooltip(Component.translatable("sodium.options.extra.cloud_height.tooltip"))
+                                .setValueFormatter(ControlValueFormatterImpls.number())
+                                .setRange(-64, 320, 8)
+                                .setDefaultValue(DEFAULTS.extra.cloudHeight)
+                                .setBinding(value -> this.sodiumOpts.extra.cloudHeight = value, () -> this.sodiumOpts.extra.cloudHeight)
+                                .setImpact(OptionImpact.LOW)
+                )
+        );
+
+        return page;
+    }
 }

@@ -4,6 +4,7 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.caffeinemc.mods.sodium.client.SodiumClientMod;
+import net.caffeinemc.mods.sodium.client.gui.SodiumOptions;
 import net.caffeinemc.mods.sodium.client.render.texture.SpriteContentsExtension;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import org.spongepowered.asm.mixin.Final;
@@ -66,8 +67,53 @@ public class SpriteContentsTickerMixin {
             }
         }
 
+        var anims = SodiumClientMod.options().animations;
+        if (!anims.allAnimations || !isAnimationEnabled(anims)) {
+            if (this.hasUploadedAllOnce) {
+                cir.setReturnValue(false);
+                return;
+            }
+        }
+
         if (onDemand && !this.wasActiveThisTick) {
             cir.setReturnValue(false);
         }
+    }
+
+    @Unique
+    private boolean isAnimationEnabled(SodiumOptions.AnimationSettings anims) {
+        if (this.parent == null) {
+            return true;
+        }
+        var name = this.parent.name();
+        if (name == null) {
+            return true;
+        }
+        String path = name.getPath();
+        if (!anims.animatedWater && path.contains("water")) {
+            return false;
+        }
+        if (!anims.animatedLava && path.contains("lava")) {
+            return false;
+        }
+        if (!anims.animatedFire && (path.contains("fire") || path.contains("soul_fire"))) {
+            return false;
+        }
+        if (!anims.animatedPortal && path.contains("portal")) {
+            return false;
+        }
+        if (!anims.animatedRedstone && (path.contains("redstone") || path.contains("sculk"))) {
+            return false;
+        }
+        if (!anims.animatedExplosion && path.contains("explosion")) {
+            return false;
+        }
+        if (!anims.animatedFlame && (path.contains("flame") || path.contains("campfire") || path.contains("lantern"))) {
+            return false;
+        }
+        if (!anims.animatedSmoke && path.contains("smoke")) {
+            return false;
+        }
+        return true;
     }
 }
