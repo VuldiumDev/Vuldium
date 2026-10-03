@@ -150,7 +150,9 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
         this.renderer.updateFogColor(fogColor);
 
         this.renderer.prepareChunkRendering(this.matrices, pos.x, pos.y, pos.z);
-        return new ChunkSectionsToRender(null, new EnumMap<>(ChunkSectionLayer.class), 0, new GpuBufferSlice[0]);
+        ChunkSectionsToRender renderState = new ChunkSectionsToRender(null, new EnumMap<>(ChunkSectionLayer.class), 0, new GpuBufferSlice[0]);
+        ((SodiumChunkSection) (Object) renderState).sodium$setRendering(this.renderer, this.matrices, pos.x, pos.y, pos.z);
+        return renderState;
     }
 
     @WrapOperation(

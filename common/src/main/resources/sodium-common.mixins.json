@@ -38,6 +38,7 @@
     "core.render.world.GameRendererMixin",
     "core.render.world.LevelExtractorMixin",
     "core.render.world.LevelRendererMixin",
+    "core.render.world.ChunkSectionsToRenderMixin",
     "core.render.world.ParticleFeatureRendererMixin",
     "core.render.world.RenderBuffersMixin",
     "core.render.world.ViewAreaMixin",
