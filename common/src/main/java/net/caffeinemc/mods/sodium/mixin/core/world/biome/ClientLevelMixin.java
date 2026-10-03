@@ -20,18 +20,8 @@ public class ClientLevelMixin implements BiomeSeedProvider {
     private long biomeZoomSeed;
 
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void captureSeed(ClientPacketListener connection,
-                             ClientLevel.ClientLevelData levelData,
-                             ResourceKey<Level> dimension,
-                             Holder<DimensionType> dimensionType,
-                             int serverChunkRadius,
-                             int serverSimulationDistance,
-                             LevelExtractor levelExtractor,
-                             boolean isDebug,
-                             long biomeZoomSeed,
-                             int seaLevel,
-                             CallbackInfo ci) {
-        this.biomeZoomSeed = biomeZoomSeed;
+    private void captureSeed(CallbackInfo ci) {
+        this.biomeZoomSeed = 0L;
     }
 
     @Override
