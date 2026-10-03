@@ -167,6 +167,7 @@ public class DefaultChunkRenderer extends ShaderChunkRenderer {
                         pass.setIndexBuffer(this.sharedIndexBuffer.getBufferObject(), IndexType.INT);
                     }
                 }
+                batch.prepare(this.drawContext);
             }
 
             if (batch.isEmpty() || batch.size <= 0) {

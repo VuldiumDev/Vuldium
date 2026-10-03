@@ -21,6 +21,7 @@
     "core.model.colors.BlockColorsMixin",
     "core.render.BlockEntityTypeMixin",
     "core.render.RenderPassAccessor",
+    "core.render.GlRenderPassMixin",
     "core.render.TextureAtlasMixin",
     "core.render.VertexFormatMixin",
     "core.render.VulkanRenderPassAccessor",
