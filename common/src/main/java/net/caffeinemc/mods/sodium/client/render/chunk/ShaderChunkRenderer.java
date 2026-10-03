@@ -133,6 +133,10 @@ public abstract class ShaderChunkRenderer implements ChunkRenderer {
         return defines;
     }
 
+    protected void begin(TerrainRenderPass pass, FogParameters parameters, GpuSampler terrainSampler) {
+        this.begin(pass, parameters, terrainSampler, null);
+    }
+
     protected void begin(TerrainRenderPass pass, FogParameters parameters, GpuSampler terrainSampler, @Nullable OitStage stage) {
         this.activeProgram = this.compileProgram(pass, stage);
     }
