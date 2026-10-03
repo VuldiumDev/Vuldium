@@ -23,7 +23,8 @@ public class StagedVertexBufferMixin {
             method = "decodeSortingPoints",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/blaze3d/vertex/MeshData;decodeQuadCentroids(Ljava/nio/ByteBuffer;ILcom/mojang/renderpearl/api/vertex/VertexFormat;Lcom/mojang/blaze3d/vertex/CompactVectorArray;I)V"))
+                    target = "Lcom/mojang/blaze3d/vertex/MeshData;decodeQuadCentroids(Ljava/nio/ByteBuffer;ILcom/mojang/renderpearl/api/vertex/VertexFormat;Lcom/mojang/blaze3d/vertex/CompactVectorArray;I)V"),
+            require = 0)
     private static void sodium$selectClosestSortingPoints(ByteBuffer vertexBuffer,
                                                           int vertexCount,
                                                           VertexFormat format,

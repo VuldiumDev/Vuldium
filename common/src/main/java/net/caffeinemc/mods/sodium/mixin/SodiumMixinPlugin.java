@@ -57,6 +57,14 @@ public class SodiumMixinPlugin implements IMixinConfigPlugin {
         }
 
         String mixin = mixinClassName.substring(MIXIN_PACKAGE_ROOT.length());
+
+        if (mixin.equals("core.render.VertexFormatMixin")) {
+            try {
+                Class.forName("com.mojang.renderpearl.api.vertex.VertexFormat");
+            } catch (ClassNotFoundException | NoClassDefFoundError e) {
+                return false;
+            }
+        }
         MixinOption option = this.config.getEffectiveOptionForMixin(mixin);
 
         if (option == null) {
