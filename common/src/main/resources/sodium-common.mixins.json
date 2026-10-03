@@ -52,7 +52,6 @@
     "features.gui.OptionsAccessor",
     "features.gui.FramerateLimitTrackerMixin",
     "features.gui.hooks.console.GameRendererMixin",
-    "features.gui.hooks.debug.DebugEntryMemoryMixin",
     "features.gui.hooks.debug.DebugScreenEntriesAccessor",
     "features.gui.hooks.debug.DebugScreenEntryListMixin",
     "features.gui.hooks.debug.DebugScreenOverlayInsertMixin",
