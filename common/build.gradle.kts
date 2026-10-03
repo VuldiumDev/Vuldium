@@ -58,7 +58,7 @@ dependencies {
     // will not yet have an opportunity to apply transformations.
     configurationPreLaunch("org.lwjgl:lwjgl:${BuildConfig.LWJGL_VERSION}")
     configurationPreLaunch("org.lwjgl:lwjgl-opengl:${BuildConfig.LWJGL_VERSION}")
-    if (BuildConfig.TARGET_VERSION != "26.1") {
+    if (BuildConfig.TARGET_VERSION == "26.3") {
         configurationPreLaunch("org.lwjgl:lwjgl-sdl:${BuildConfig.LWJGL_VERSION}")
     } else {
         configurationPreLaunch("org.lwjgl:lwjgl-glfw:${BuildConfig.LWJGL_VERSION}")

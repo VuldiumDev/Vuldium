@@ -27,7 +27,7 @@ object BuildConfig {
     }
 
     val LWJGL_VERSION: String = when (TARGET_VERSION) {
-        "26.1" -> "3.4.1"
+        "26.1", "26.2" -> "3.4.1"
         else -> "3.4.3"
     }
 
