@@ -450,6 +450,12 @@ public class SodiumWorldRenderer {
      * @return True if the entity is visible, otherwise false
      */
     public <T extends Entity, S extends EntityRenderState> boolean isEntityVisible(EntityRenderer<T, S> renderer, T entity, float partialTicks) {
+        if (!SodiumClientMod.options().render.staticEntities) {
+            if (entity instanceof net.minecraft.world.entity.decoration.HangingEntity ||
+                    entity instanceof net.minecraft.world.entity.decoration.ArmorStand) {
+                return false;
+            }
+        }
         if (!this.useEntityCulling) {
             return true;
         }

@@ -92,6 +92,13 @@
     "workarounds.context_creation.GlSurfaceMixin",
     "workarounds.context_creation.WindowMixin",
     "workarounds.event_loop.RenderSystemMixin",
-    "workarounds.window_minimized_state.GameRendererMixin"
+    "workarounds.window_minimized_state.GameRendererMixin",
+    "features.particles.ParticleEngineMixin",
+    "features.details.SkyRendererMixin",
+    "features.details.WeatherEffectRendererMixin",
+    "features.gui.HudMixin",
+    "features.render.FogRendererMixin",
+    "features.render.BeaconRendererMixin",
+    "features.extra.ToastManagerMixin"
   ]
 }

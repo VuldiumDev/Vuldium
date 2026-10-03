@@ -6,6 +6,10 @@ import net.minecraft.core.Direction;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.nio.ByteBuffer;
 
@@ -41,6 +45,22 @@ public abstract class CloudRendererMixin {
     @Shadow
     private static boolean isEastEmpty(long cellData) {
         throw new AssertionError();
+    }
+
+    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
+    private void sodium$cancelClouds(int color, net.minecraft.client.CloudStatus status, float cloudHeight, int cloudDistance, net.minecraft.world.phys.Vec3 cameraPos, long ticks, float partialTick, org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        if (!net.caffeinemc.mods.sodium.client.SodiumClientMod.options().extra.clouds) {
+            ci.cancel();
+        }
+    }
+
+    @ModifyVariable(method = "render", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    private float sodium$modifyCloudHeight(float cloudHeight) {
+        int customHeight = net.caffeinemc.mods.sodium.client.SodiumClientMod.options().extra.cloudHeight;
+        if (customHeight != 192) {
+            return (float) customHeight;
+        }
+        return cloudHeight;
     }
 
     /**
