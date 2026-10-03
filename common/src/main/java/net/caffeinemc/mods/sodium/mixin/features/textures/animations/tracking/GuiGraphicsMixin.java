@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GuiGraphicsExtractor.class)
 public class GuiGraphicsMixin {
 
-    @Inject(method = "blitSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIII)V",
+    @Inject(method = "blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIII)V",
             at = @At("HEAD"))
     private void preDrawSprite(RenderPipeline renderPipeline,
                                TextureAtlasSprite sprite,
@@ -25,7 +25,7 @@ public class GuiGraphicsMixin {
         SpriteUtil.INSTANCE.markSpriteActive(sprite);
     }
 
-    @Inject(method = "blitSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIIIIIII)V",
+    @Inject(method = "blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIIIIIII)V",
             at = @At("HEAD"))
     private void preDrawSprite(RenderPipeline renderPipeline,
                                TextureAtlasSprite sprite,

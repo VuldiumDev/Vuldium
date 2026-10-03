@@ -19,7 +19,7 @@ public class TextureAtlasSpriteMixin implements TextureAtlasSpriteExtension {
             method = "createAnimationState",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/renderer/texture/SpriteContents;createAnimationState(Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;I)Lnet/minecraft/client/renderer/texture/SpriteContents$AnimationState;"))
+                    target = "Lnet/minecraft/client/renderer/texture/SpriteContents;createAnimationState(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;I)Lnet/minecraft/client/renderer/texture/SpriteContents$AnimationState;"))
     private SpriteContents.AnimationState hookTickerInstantiation(SpriteContents instance,
                                                                   GpuBufferSlice uboSlice,
                                                                   int spriteUboSize,

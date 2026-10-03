@@ -41,6 +41,7 @@ sourceSets {
 }
 
 repositories {
+    mavenCentral()
     mavenLocal()
 }
 
@@ -52,7 +53,6 @@ dependencies {
 
     compileOnly("net.fabricmc:sponge-mixin:0.13.2+mixin.0.8.5")
     compileOnly("net.fabricmc:fabric-loader:${BuildConfig.FABRIC_LOADER_VERSION}")
-    compileOnly("org.lwjgl:lwjgl-vulkan:${BuildConfig.LWJGL_VERSION}")
 
     // We need to be careful during pre-launch that we don't touch any Minecraft classes, since other mods
     // will not yet have an opportunity to apply transformations.

@@ -14,7 +14,6 @@
     "minVersion": "0.5.2"
   },
   "client": [
-    "core.GlFallbackAllocatorMixin",
     "core.GpuDeviceAccessor",
     "core.MinecraftMixin",
     "core.WindowMixin",
@@ -39,7 +38,6 @@
     "core.render.world.GameRendererMixin",
     "core.render.world.LevelExtractorMixin",
     "core.render.world.LevelRendererMixin",
-    "core.render.world.MixinWorldRenderer",
     "core.render.world.ParticleFeatureRendererMixin",
     "core.render.world.RenderBuffersMixin",
     "core.render.world.ViewAreaMixin",

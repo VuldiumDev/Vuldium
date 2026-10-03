@@ -48,7 +48,7 @@ public class MinecraftMixin {
             method = "renderFrame",
             at = @At(
                     value = "INVOKE",
-                    target = "Lcom/mojang/renderpearl/api/device/GpuSurface;present()V"
+                    target = "Lcom/mojang/blaze3d/systems/GpuSurface;present()V"
             )
     )
     private void sodkam$presentWithFrameGeneration(com.mojang.blaze3d.systems.GpuSurface surface, Operation<Void> original) {

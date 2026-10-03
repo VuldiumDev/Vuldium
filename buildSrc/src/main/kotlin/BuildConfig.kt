@@ -1,7 +1,7 @@
 import org.gradle.api.Project
 
 object BuildConfig {
-    val TARGET_VERSION: String = System.getProperty("mc.version") ?: "26.3"
+    val TARGET_VERSION: String = System.getProperty("mc.version") ?: "26.2"
 
     val MINECRAFT_VERSION: String = when (TARGET_VERSION) {
         "26.1" -> "26.1"

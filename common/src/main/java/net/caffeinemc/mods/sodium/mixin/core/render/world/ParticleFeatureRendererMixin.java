@@ -28,7 +28,7 @@ public abstract class ParticleFeatureRendererMixin {
      * (presumably zero) for {@code GameTime} and other {@code Globals} and {@code Lighting} fields.
      * See <a href="https://github.com/CaffeineMC/sodium/issues/3612">this issue.</a>
      */
-    @Inject(method = "executeGroup", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;bindDefaultUniforms(Lcom/mojang/renderpearl/api/commands/RenderPass;)V"))
+    @Inject(method = "executeGroup", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;bindDefaultUniforms(Lcom/mojang/blaze3d/systems/RenderPass;)V"))
     private void sodium$bindDefaultUniforms(FeatureFrameContext context, OitStage stage, RenderPass renderPass, int groupIndex, List<QuadParticleFeatureRenderer.Submit> submits, boolean strictlyOrdered, CallbackInfo ci) {
         GpuBuffer globalUniform = RenderSystem.getGlobalSettingsUniform();
         if (globalUniform != null) {
