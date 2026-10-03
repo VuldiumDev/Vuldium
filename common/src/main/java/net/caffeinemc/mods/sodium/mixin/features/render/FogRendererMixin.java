@@ -6,16 +6,29 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.FogRenderer;
+import org.spongepowered.asm.mixin.Dynamic;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(FogRenderer.class)
 public class FogRendererMixin {
-    @Inject(method = "setupFog", at = @At("RETURN"))
-    private void sodium$modifyFog(Camera camera, int viewDistance, DeltaTracker deltaTracker, float farPlaneDistance, ClientLevel level, CallbackInfoReturnable<FogData> cir) {
-        FogData data = cir.getReturnValue();
+    @Dynamic
+    @Inject(method = "setupFog(Lnet/minecraft/client/Camera;ILnet/minecraft/client/DeltaTracker;FLnet/minecraft/client/multiplayer/ClientLevel;)Lnet/minecraft/client/renderer/fog/FogData;", at = @At("RETURN"), require = 0)
+    private void sodium$modifyFogLegacy(Camera camera, int viewDistance, DeltaTracker deltaTracker, float farPlaneDistance, ClientLevel level, CallbackInfoReturnable<FogData> cir) {
+        this.applyFogModifications(cir.getReturnValue());
+    }
+
+    @Dynamic
+    @Inject(method = "setupFog(Lnet/minecraft/client/Camera;ILnet/minecraft/client/DeltaTracker;FLnet/minecraft/client/multiplayer/ClientLevel;Z)Lnet/minecraft/client/renderer/fog/FogData;", at = @At("RETURN"), require = 0)
+    private void sodium$modifyFog26_4(Camera camera, int viewDistance, DeltaTracker deltaTracker, float farPlaneDistance, ClientLevel level, boolean flag, CallbackInfoReturnable<FogData> cir) {
+        this.applyFogModifications(cir.getReturnValue());
+    }
+
+    @Unique
+    private void applyFogModifications(FogData data) {
         if (data == null) {
             return;
         }
