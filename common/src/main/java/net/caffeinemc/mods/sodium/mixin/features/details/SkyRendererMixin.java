@@ -16,28 +16,28 @@ public class SkyRendererMixin {
     // The sky disc is a lightweight 16-vertex mesh that must always be drawn.
 
     @Inject(method = "renderSunriseAndSunset", at = @At("HEAD"), cancellable = true, require = 0)
-    private void sodium$cancelSunrise(PoseStack poseStack, float angle, int color, CallbackInfo ci) {
+    private void sodium$cancelSunrise(CallbackInfo ci) {
         if (!SodiumClientMod.options().details.sky) {
             ci.cancel();
         }
     }
 
     @Inject(method = "renderStars", at = @At("HEAD"), cancellable = true, require = 0)
-    private void sodium$cancelStars(float starBrightness, PoseStack poseStack, CallbackInfo ci) {
+    private void sodium$cancelStars(CallbackInfo ci) {
         if (!SodiumClientMod.options().details.stars) {
             ci.cancel();
         }
     }
 
     @Inject(method = "renderSun", at = @At("HEAD"), cancellable = true, require = 0)
-    private void sodium$cancelSun(float rainLevel, PoseStack poseStack, CallbackInfo ci) {
+    private void sodium$cancelSun(CallbackInfo ci) {
         if (!SodiumClientMod.options().details.sunMoon) {
             ci.cancel();
         }
     }
 
     @Inject(method = "renderMoon", at = @At("HEAD"), cancellable = true, require = 0)
-    private void sodium$cancelMoon(MoonPhase moonPhase, float rainLevel, PoseStack poseStack, CallbackInfo ci) {
+    private void sodium$cancelMoon(CallbackInfo ci) {
         if (!SodiumClientMod.options().details.sunMoon) {
             ci.cancel();
         }
