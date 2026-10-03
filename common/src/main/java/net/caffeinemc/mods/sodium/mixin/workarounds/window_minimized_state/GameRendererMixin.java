@@ -16,8 +16,8 @@ public class GameRendererMixin {
             Workarounds.isWorkaroundEnabled(Workarounds.Reference.INTEL_FRAMEBUFFER_BLIT_CRASH_WHEN_UNFOCUSED);
 
     @Redirect(method = "extractWindow",
-            at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;isIconified()Z"))
+            at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;isMinimized()Z"))
     private boolean redirectWindowMinimized(Window window) {
-        return window.isIconified() || GLFW.glfwGetWindowAttrib(window.handle(), GLFW.GLFW_ICONIFIED) != 0;
+        return window.isMinimized() || GLFW.glfwGetWindowAttrib(window.handle(), GLFW.GLFW_ICONIFIED) != 0;
     }
 }
