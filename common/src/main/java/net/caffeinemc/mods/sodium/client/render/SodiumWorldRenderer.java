@@ -381,6 +381,14 @@ public class SodiumWorldRenderer {
 
     private void extractBlockEntity(BlockEntity blockEntity, PoseStack poseStack, Camera camera, float tickDelta, Long2ObjectMap<SortedSet<BlockDestructionProgress>> progression, LevelRenderState levelRenderState, boolean global) {
         BlockPos blockPos = blockEntity.getBlockPos();
+        if (!global && this.useEntityCulling) {
+            int bx = blockPos.getX();
+            int by = blockPos.getY();
+            int bz = blockPos.getZ();
+            if (!this.isBoxVisible(bx, by, bz, bx + 1, by + 1, bz + 1)) {
+                return;
+            }
+        }
         SortedSet<BlockDestructionProgress> sortedSet = progression.get(blockPos.asLong());
         ModelFeatureRenderer.CrumblingOverlay crumblingOverlay;
         if (sortedSet != null && !sortedSet.isEmpty()) {

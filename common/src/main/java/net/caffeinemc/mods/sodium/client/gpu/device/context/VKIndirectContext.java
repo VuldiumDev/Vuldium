@@ -11,6 +11,7 @@ public class VKIndirectContext extends VKDrawContext {
 
     private MappableRingBuffer ringBuffer;
     public GpuBufferSlice.MappedView mappedView;
+    public GpuBufferSlice currentBufferSlice;
     private int currentOffset;
     private int currentSize;
 
@@ -38,6 +39,7 @@ public class VKIndirectContext extends VKDrawContext {
         this.currentSize = size;
         this.ringBuffer = new MappableRingBuffer(() -> "Indirect ring buffer", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_INDIRECT_PARAMETERS, size);
         this.mappedView = this.ringBuffer.currentBuffer().map(false, true);
+        this.currentBufferSlice = this.mappedView.slice();
 
         if (lastRingBuffer != null) {
             MemoryUtil.memCopy(MemoryUtil.memAddress(lastMappedView.data()), MemoryUtil.memAddress(this.mappedView.data()), lastSize);
@@ -51,6 +53,7 @@ public class VKIndirectContext extends VKDrawContext {
         this.mappedView.close();
         this.ringBuffer.rotate();
         this.mappedView = this.ringBuffer.currentBuffer().map(false, true);
+        this.currentBufferSlice = this.mappedView.slice();
         this.currentOffset = 0;
     }
 

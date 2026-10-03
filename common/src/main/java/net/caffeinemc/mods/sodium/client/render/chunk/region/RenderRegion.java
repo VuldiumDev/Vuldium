@@ -1,6 +1,7 @@
 package net.caffeinemc.mods.sodium.client.render.chunk.region;
 
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.caffeinemc.mods.sodium.client.gpu.arena.ArenaAggregator;
 import net.caffeinemc.mods.sodium.client.gpu.arena.RegionAllocatorHandle;
@@ -407,8 +408,23 @@ public class RenderRegion {
             this.indexHandle = region.arenaAggregator.getIndexBufferAllocator(region, Integer.BYTES, region.indexChangeConsumer);
         }
 
+        private GpuBufferSlice cachedGeometrySlice;
+        private GpuBuffer cachedGeometryBuffer;
+
         public GpuBuffer getGeometryBuffer() {
             return this.geometryHandle.getBufferObject();
+        }
+
+        public GpuBufferSlice getGeometrySlice() {
+            GpuBuffer buffer = this.getGeometryBuffer();
+            if (buffer == null) {
+                return null;
+            }
+            if (this.cachedGeometrySlice == null || this.cachedGeometryBuffer != buffer) {
+                this.cachedGeometryBuffer = buffer;
+                this.cachedGeometrySlice = buffer.slice();
+            }
+            return this.cachedGeometrySlice;
         }
 
         public GpuBuffer getIndexBuffer() {
@@ -418,6 +434,8 @@ public class RenderRegion {
         public void delete() {
             this.geometryHandle.deleteSingleOwner();
             this.indexHandle.deleteSingleOwner();
+            this.cachedGeometrySlice = null;
+            this.cachedGeometryBuffer = null;
         }
 
         public RegionAllocatorHandle getGeometryAllocator() {

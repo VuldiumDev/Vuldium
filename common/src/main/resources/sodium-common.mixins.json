@@ -37,6 +37,8 @@
     "core.render.world.LevelExtractorMixin",
     "core.render.world.LevelRendererMixin",
     "core.render.world.MixinWorldRenderer",
+    "core.render.world.LightmapRenderStateExtractorMixin",
+    "core.render.world.ChunkSectionsToRenderMixin",
     "core.render.world.ParticleFeatureRendererMixin",
     "core.render.world.RenderBuffersMixin",
     "core.render.world.ViewAreaMixin",
@@ -59,6 +61,7 @@
     "features.gui.hooks.debug.DebugScreenOverlayMixin",
     "features.gui.hooks.debug.MinecraftRenderFrameMixin",
     "features.gui.hooks.settings.OptionsScreenMixin",
+    "features.math.MthMixin",
     "features.render.PresentModeMixin",
     "features.render.entity.CubeMixin",
     "features.render.entity.ModelPartMixin",
@@ -99,6 +102,7 @@
     "features.gui.HudMixin",
     "features.render.FogRendererMixin",
     "features.render.BeaconRendererMixin",
-    "features.extra.ToastManagerMixin"
+    "features.extra.ToastManagerMixin",
+    "features.math.MthMixin"
   ]
 }

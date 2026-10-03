@@ -51,6 +51,8 @@ import java.util.List;
 public abstract class LevelRendererMixin implements LevelRendererExtension {
     @Unique
     private static EnumMap<ChunkSectionLayer,Int2ObjectOpenHashMap<List<RenderPass.Draw<GpuBufferSlice[]>>>> STATIC_MAP;
+    @Unique
+    private static final GpuBufferSlice[] EMPTY_SLICES = new GpuBufferSlice[0];
 
     @Shadow
     @Final
@@ -156,7 +158,13 @@ public abstract class LevelRendererMixin implements LevelRendererExtension {
      */
     @Overwrite
     public boolean isSectionCompiledAndVisible(BlockPos pos, final long chunkFadeDuration) {
-        return this.renderer.isSectionReady(pos.getX() >> 4, pos.getY() >> 4, pos.getZ() >> 4);
+        int cx = pos.getX() >> 4;
+        int cy = pos.getY() >> 4;
+        int cz = pos.getZ() >> 4;
+        if (!this.renderer.isSectionReady(cx, cy, cz)) {
+            return false;
+        }
+        return this.renderer.isBoxVisible(cx << 4, cy << 4, cz << 4, (cx + 1) << 4, (cy + 1) << 4, (cz + 1) << 4);
     }
 
     @Inject(method = "invalidateCompiledGeometry", at = @At("HEAD"), cancellable = true)
