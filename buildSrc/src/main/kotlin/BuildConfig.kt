@@ -34,7 +34,10 @@ object BuildConfig {
         else -> "3.4.3"
     }
 
-    val MINECRAFT_DEPENDENCY: String = "$MINECRAFT_VERSION.x"
+    val MINECRAFT_DEPENDENCY: String = when (TARGET_VERSION) {
+        "26.4" -> ">=26.4-alpha.0"
+        else -> "$MINECRAFT_VERSION.x"
+    }
     val SUPPORT_FRAPI : Boolean = true
 
     // https://semver.org/
