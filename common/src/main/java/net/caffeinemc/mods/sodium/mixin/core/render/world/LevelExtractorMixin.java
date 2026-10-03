@@ -54,13 +54,32 @@ public class LevelExtractorMixin {
         this.renderer = ((LevelRendererExtension) Minecraft.getInstance().levelRenderer).sodium$getWorldRenderer();
     }
 
-    @Inject(method = "isEntityVisible", at = @At("HEAD"), cancellable = true)
+    @Dynamic
+    @Inject(method = "isEntityVisible(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z", at = @At("HEAD"), cancellable = true, require = 0)
     private void sodium$cullEntityEarly(net.minecraft.world.entity.Entity entity,
                                         Frustum frustum,
                                         double camX,
                                         double camY,
                                         double camZ,
                                         org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
+        if (this.renderer != null) {
+            net.minecraft.world.phys.AABB bb = entity.getBoundingBox();
+            if (!this.renderer.isBoxVisible(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ)) {
+                cir.setReturnValue(false);
+            }
+        }
+    }
+
+    @Dynamic
+    @Inject(method = "isEntityVisible(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDDFJ)Z", at = @At("HEAD"), cancellable = true, require = 0)
+    private void sodium$cullEntityEarly26_3(net.minecraft.world.entity.Entity entity,
+                                            Frustum frustum,
+                                            double camX,
+                                            double camY,
+                                            double camZ,
+                                            float partialTicks,
+                                            long fadeDuration,
+                                            org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> cir) {
         if (this.renderer != null) {
             net.minecraft.world.phys.AABB bb = entity.getBoundingBox();
             if (!this.renderer.isBoxVisible(bb.minX, bb.minY, bb.minZ, bb.maxX, bb.maxY, bb.maxZ)) {
