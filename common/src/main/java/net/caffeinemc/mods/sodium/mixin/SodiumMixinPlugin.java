@@ -43,6 +43,25 @@ public class SodiumMixinPlugin implements IMixinConfigPlugin {
         return null;
     }
 
+    private static final Set<String> RENDERPEARL_DEPENDENT_MIXINS = Set.of(
+            "core.render.VertexFormatMixin",
+            "core.render.immediate.consumer.BufferBuilderMixin",
+            "core.render.immediate.consumer.SheetedDecalTextureGeneratorMixin",
+            "core.render.immediate.consumer.SpriteCoordinateExpanderMixin",
+            "features.render.immediate.buffer_builder.intrinsics.BufferBuilderMixin",
+            "features.render.immediate.buffer_builder.sorting.StagedVertexBufferMixin"
+    );
+
+    private static final boolean HAS_RENDERPEARL_VERTEX_FORMAT;
+    static {
+        boolean present = false;
+        try {
+            Class.forName("com.mojang.renderpearl.api.vertex.VertexFormat");
+            present = true;
+        } catch (Throwable ignored) {}
+        HAS_RENDERPEARL_VERTEX_FORMAT = present;
+    }
+
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if (this.dependencyResolutionFailed) {
@@ -58,12 +77,8 @@ public class SodiumMixinPlugin implements IMixinConfigPlugin {
 
         String mixin = mixinClassName.substring(MIXIN_PACKAGE_ROOT.length());
 
-        if (mixin.equals("core.render.VertexFormatMixin")) {
-            try {
-                Class.forName("com.mojang.renderpearl.api.vertex.VertexFormat");
-            } catch (ClassNotFoundException | NoClassDefFoundError e) {
-                return false;
-            }
+        if (!HAS_RENDERPEARL_VERTEX_FORMAT && RENDERPEARL_DEPENDENT_MIXINS.contains(mixin)) {
+            return false;
         }
         MixinOption option = this.config.getEffectiveOptionForMixin(mixin);
 
