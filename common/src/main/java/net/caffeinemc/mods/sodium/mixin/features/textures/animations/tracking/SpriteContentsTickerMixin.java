@@ -36,8 +36,8 @@ public class SpriteContentsTickerMixin {
      * @author IMS
      * @reason Replace fragile Shadow
      */
-    @Inject(method = "<init>", at = @At("RETURN"))
-    public void assignParent(SpriteContents this$0,
+    @Inject(method = "<init>(Lnet/minecraft/client/renderer/texture/SpriteContents;Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;[Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;)V", at = @At("RETURN"), require = 0)
+    public void assignParent26_3(SpriteContents this$0,
                              SpriteContents.AnimatedTexture animationInfo,
                              Int2ObjectMap<GpuTextureView> frameTexturesByIndex,
                              GpuBufferSlice[] spriteUbosByMip,
@@ -45,14 +45,29 @@ public class SpriteContentsTickerMixin {
         this.parent = this$0;
     }
 
+    @Inject(method = "<init>(Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;[Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;)V", at = @At("RETURN"), require = 0)
+    public void assignParent26_4(SpriteContents.AnimatedTexture animationInfo,
+                             Int2ObjectMap<GpuTextureView> frameTexturesByIndex,
+                             GpuBufferSlice[] spriteUbosByMip,
+                             CallbackInfo ci) {
+        try {
+            var field = animationInfo.getClass().getDeclaredField("this$0");
+            field.setAccessible(true);
+            this.parent = (SpriteContents) field.get(animationInfo);
+        } catch (Throwable ignored) {
+        }
+    }
+
     // We need to copy the value from the parent to retain it for the whole tick, since if we reset it at the end of
     // needsToDraw it would be reset after the first animation frame is finished, but before processing the rest of the
     // frames.
     @Inject(method = "tick", at = @At("HEAD"))
     private void captureActiveState(CallbackInfo ci) {
-        SpriteContentsExtension parent = (SpriteContentsExtension) this.parent;
-        this.wasActiveThisTick = parent.sodium$isActive();
-        parent.sodium$setActive(false);
+        if (this.parent != null) {
+            SpriteContentsExtension parent = (SpriteContentsExtension) this.parent;
+            this.wasActiveThisTick = parent.sodium$isActive();
+            parent.sodium$setActive(false);
+        }
     }
 
     @Inject(method = "needsToDraw", at = @At("HEAD"), cancellable = true)

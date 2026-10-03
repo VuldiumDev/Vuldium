@@ -1,20 +1,22 @@
 package net.caffeinemc.mods.sodium.mixin.features.textures.animations.tracking;
 
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import net.caffeinemc.mods.sodium.api.texture.SpriteUtil;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GuiGraphicsExtractor.class)
 public class GuiGraphicsMixin {
 
-    @Inject(method = "blitSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIII)V",
-            at = @At("HEAD"))
-    private void preDrawSprite(RenderPipeline renderPipeline,
+    @Inject(method = {
+            "blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIII)V",
+            "blitSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIII)V"
+    }, at = @At("HEAD"), require = 0)
+    private void preDrawSprite(@Coerce Object renderPipeline,
                                TextureAtlasSprite sprite,
                                int x,
                                int y,
@@ -25,9 +27,11 @@ public class GuiGraphicsMixin {
         SpriteUtil.INSTANCE.markSpriteActive(sprite);
     }
 
-    @Inject(method = "blitSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIIIIIII)V",
-            at = @At("HEAD"))
-    private void preDrawSprite(RenderPipeline renderPipeline,
+    @Inject(method = {
+            "blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIIIIIII)V",
+            "blitSprite(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;IIIIIIIII)V"
+    }, at = @At("HEAD"), require = 0)
+    private void preDrawSprite(@Coerce Object renderPipeline,
                                TextureAtlasSprite sprite,
                                int spriteWidth,
                                int spriteHeight,
