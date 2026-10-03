@@ -1,9 +1,9 @@
 #version 330
 #extension GL_ARB_separate_shader_objects : require
 
-#include <sodium:globals.glsl>
-#include <sodium:fog.glsl>
-#include <sodium:chunk_vertex.glsl>
+#moj_import <sodium:globals.glsl>
+#moj_import <sodium:fog.glsl>
+#moj_import <sodium:chunk_vertex.glsl>
 
 layout(location = 0) out vec4 v_Color;
 layout(location = 1) out vec2 v_TexCoord;

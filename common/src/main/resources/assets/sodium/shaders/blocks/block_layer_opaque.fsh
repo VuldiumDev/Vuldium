@@ -2,10 +2,10 @@
 #extension GL_ARB_separate_shader_objects : require
 #extension GL_ARB_shader_image_load_store : enable
 
-#include <sodium:globals.glsl>
-#include <sodium:fog.glsl>
-#include <sodium:chunk_material.glsl>
-#include <minecraft:oit.glsl>
+#moj_import <sodium:globals.glsl>
+#moj_import <sodium:fog.glsl>
+#moj_import <sodium:chunk_material.glsl>
+#moj_import <minecraft:oit.glsl>
 
 #ifndef fma
 #define fma(a, b, c) (((a) * (b)) + (c))
