@@ -17,40 +17,15 @@
 
 ### 📥 Downloads
 
-#### Stable builds
-
-The latest stable release of Sodium can be downloaded from our official [Modrinth](https://modrinth.com/mod/sodium) and
-[CurseForge](https://www.curseforge.com/minecraft/mc-mods/sodium) pages.
-
-#### Nightly builds (for developers)
-
-We also provide bleeding-edge builds ("nightlies") which are useful for testing the very latest changes before they're
-packaged into a release. These builds are primarily intended for other mod developers and users with expert skills, and do
-not come with any support or warranty.
-
-For a complete listing of available nightly builds, please see [the wiki page](https://github.com/CaffeineMC/sodium/wiki/Nightly-Builds). We also have a Maven repository for including Sodium in your development workspace or build process, for which you can also find [documentation on our wiki](https://github.com/CaffeineMC/sodium/wiki/CaffeineMC-Maven-&-Config-API).
+Release builds for Minecraft 26.1, 26.2, 26.3, and 26.4 are available under [Releases](https://github.com/VuldiumDev/Vuldium/releases) and on [Modrinth](https://modrinth.com).
 
 ### 🖥️ Installation
 
-Since the release of Sodium 0.6.0, both the _Fabric_ and _NeoForge_ mod loaders are supported. We generally recommend
-that new users prefer to use the _Fabric_ mod loader, since it is more lightweight and stable (for the time being.)
-
-For more information about downloading and installing the mod, please refer to our [Installation Guide](https://github.com/CaffeineMC/sodium/wiki/Installation).
-
-### 🙇 Getting Help
-
-For technical support (including help with mod installation problems and game crashes), please use our
-[official Discord server](https://caffeinemc.net/discord).
+Vuldium supports both the **Fabric** and **NeoForge** mod loaders. Simply drop the appropriate `.jar` file into your `.minecraft/mods` directory.
 
 ### 📬 Reporting Issues
 
-If you do not need technical support and would like to report an issue (bug, crash, etc.) or otherwise request changes
-(for mod compatibility, new features, etc.), then we encourage you to open an issue on the
-[project issue tracker](https://github.com/CaffeineMC/sodium/issues).
-
-Please note that while the issue tracker is open to feature requests, development is primarily focused on
-improving compatibility, performance, and finishing any unimplemented features necessary for parity with
-the vanilla renderer.
+If you encounter any bugs, crashes, or compatibility issues, please report them on the [Vuldium Issue Tracker](https://github.com/VuldiumDev/Vuldium/issues).
 
 ### 💬 Join the Community
 
