@@ -9,7 +9,7 @@ import com.mojang.renderpearl.api.GpuFormat;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import net.caffeinemc.mods.sodium.client.SodiumClientMod;
-import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.SodkamBlitPass;
+import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.VuldiumBlitPass;
 import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.UpscaleQuality;
 import net.caffeinemc.mods.sodium.client.util.FogParameters;
 import net.caffeinemc.mods.sodium.client.util.FogStorage;
@@ -48,10 +48,10 @@ public class GameRendererMixin implements GameRendererStorage {
     private final Matrix4f projection = new Matrix4f();
 
     @Unique
-    private RenderTarget sodkam$worldTarget;
+    private RenderTarget vuldium$worldTarget;
 
     @Unique
-    private boolean sodkam$isWorldTargetActive = false;
+    private boolean vuldium$isWorldTargetActive = false;
 
     @Override
     public FogParameters sodium$getFogParameters() {
@@ -71,9 +71,9 @@ public class GameRendererMixin implements GameRendererStorage {
     }
 
     @Inject(method = "mainRenderTarget", at = @At("HEAD"), cancellable = true)
-    private void sodkam$redirectMainRenderTarget(CallbackInfoReturnable<RenderTarget> cir) {
-        if (this.sodkam$isWorldTargetActive && this.sodkam$worldTarget != null) {
-            cir.setReturnValue(this.sodkam$worldTarget);
+    private void vuldium$redirectMainRenderTarget(CallbackInfoReturnable<RenderTarget> cir) {
+        if (this.vuldium$isWorldTargetActive && this.vuldium$worldTarget != null) {
+            cir.setReturnValue(this.vuldium$worldTarget);
         }
     }
 
@@ -82,8 +82,8 @@ public class GameRendererMixin implements GameRendererStorage {
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel()V"))
-    private void sodkam$beforeRenderLevel(CallbackInfo ci) {
-        var quality = SodiumClientMod.options().sodkam.superResolution;
+    private void vuldium$beforeRenderLevel(CallbackInfo ci) {
+        var quality = SodiumClientMod.options().vuldium.superResolution;
         if (quality == UpscaleQuality.NATIVE) {
             return;
         }
@@ -100,8 +100,8 @@ public class GameRendererMixin implements GameRendererStorage {
             return;
         }
 
-        this.sodkam$ensureWorldTarget(renderWidth, renderHeight);
-        this.sodkam$isWorldTargetActive = true;
+        this.vuldium$ensureWorldTarget(renderWidth, renderHeight);
+        this.vuldium$isWorldTargetActive = true;
     }
 
     @Inject(
@@ -110,28 +110,28 @@ public class GameRendererMixin implements GameRendererStorage {
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/renderer/GameRenderer;renderLevel()V",
                     shift = At.Shift.AFTER))
-    private void sodkam$afterWorldRender(CallbackInfo ci) {
-        if (!this.sodkam$isWorldTargetActive) {
+    private void vuldium$afterWorldRender(CallbackInfo ci) {
+        if (!this.vuldium$isWorldTargetActive) {
             return;
         }
 
-        this.sodkam$isWorldTargetActive = false;
+        this.vuldium$isWorldTargetActive = false;
 
-        if (this.sodkam$worldTarget != null && this.mainRenderTarget != null) {
-            SodkamBlitPass.blit(this.sodkam$worldTarget, this.mainRenderTarget);
+        if (this.vuldium$worldTarget != null && this.mainRenderTarget != null) {
+            VuldiumBlitPass.blit(this.vuldium$worldTarget, this.mainRenderTarget);
         }
     }
 
     @Inject(method = "close", at = @At("RETURN"))
-    private void sodkam$onClose(CallbackInfo ci) {
-        if (this.sodkam$worldTarget != null) {
-            this.sodkam$worldTarget.destroyBuffers();
-            this.sodkam$worldTarget = null;
+    private void vuldium$onClose(CallbackInfo ci) {
+        if (this.vuldium$worldTarget != null) {
+            this.vuldium$worldTarget.destroyBuffers();
+            this.vuldium$worldTarget = null;
         }
     }
 
     @Unique
-    private void sodkam$ensureWorldTarget(int renderWidth, int renderHeight) {
+    private void vuldium$ensureWorldTarget(int renderWidth, int renderHeight) {
         GpuFormat colorFmt = this.mainRenderTarget.getColorTexture() != null
                 ? this.mainRenderTarget.getColorTexture().getFormat()
                 : GpuFormat.RGBA8_UNORM;
@@ -139,16 +139,16 @@ public class GameRendererMixin implements GameRendererStorage {
                 ? this.mainRenderTarget.getDepthTexture().getFormat()
                 : GpuFormat.D32_FLOAT;
 
-        if (this.sodkam$worldTarget == null) {
-            this.sodkam$worldTarget = new TextureTarget(
+        if (this.vuldium$worldTarget == null) {
+            this.vuldium$worldTarget = new TextureTarget(
                     "vuldium_world",
                     renderWidth,
                     renderHeight,
                     colorFmt,
                     depthFmt
             );
-        } else if (this.sodkam$worldTarget.width != renderWidth || this.sodkam$worldTarget.height != renderHeight) {
-            this.sodkam$worldTarget.resize(renderWidth, renderHeight);
+        } else if (this.vuldium$worldTarget.width != renderWidth || this.vuldium$worldTarget.height != renderHeight) {
+            this.vuldium$worldTarget.resize(renderWidth, renderHeight);
         }
     }
 

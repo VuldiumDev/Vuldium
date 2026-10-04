@@ -1,3 +1,42 @@
+# Vuldium Dual Licensing Terms
+
+Vuldium is built on the Sodium rendering engine and contains both upstream open-source code and proprietary Vuldium technologies.
+
+---
+
+## 1. Vuldium Proprietary Technologies & Innovations License
+
+**Copyright (c) 2026 Vuldium Authors. All Rights Reserved.**
+
+All original Vuldium proprietary source code, algorithms, architectures, shaders, and technologies—including but not limited to:
+- The Vulkan rendering backend and execution context (
+et.caffeinemc.mods.sodium.client.render.chunk.vulkan.*, 
+et.caffeinemc.mods.sodium.client.gpu.device.vulkan.*, 
+et.caffeinemc.mods.sodium.client.gpu.arena.vulkan.*)
+- Zero-copy memory-mapped region I/O and SIMD loaders (
+et.caffeinemc.mods.sodium.client.systems.regionio.*, ulkan.io.*)
+- JIT Lazy DFU compiler proxy (
+et.caffeinemc.mods.sodium.client.systems.dfu.*)
+- Asynchronous chunk executor (
+et.caffeinemc.mods.sodium.client.systems.worldgen.*)
+- GPU Hi-Z occlusion culling and meshlet pipelines (ulkan.cull.*, ulkan.meshlet.*, ulkan.mesher.*)
+- Frame pacing, WSI direct presentation, and low-latency synchronization (ulkan.pacing.*, ulkan.wsi.*, ulkan.latency.*)
+- Proprietary shaders and compute programs located under ssets/sodium/shaders/compute/ and ssets/sodium/shaders/post/
+
+**ARE STRICTLY PROPRIETARY AND PROTECTED BY COPYRIGHT LAW.**
+
+### Restrictions:
+1. **No Reproduction or Redistribution:** No part of the Vuldium proprietary technologies may be copied, reproduced, extracted, distributed, sublicensed, or integrated into any other software, modification (mod), client, or commercial product without prior express written permission from the Vuldium Authors.
+2. **Source-Available for Verification Only:** Access to the source code of Vuldium proprietary modules is provided strictly for personal use, compiling personal client builds, and verification. No rights to fork, re-release, or reuse Vuldium modules in other projects are granted.
+
+---
+
+## 2. Upstream Sodium Engine License
+
+Upstream Sodium codebase components created by JellySquid and CaffeineMC remain licensed under their respective original licenses (PolyForm Shield License 1.0.0 / GNU Lesser General Public License v3.0).
+
+You are free to use, modify, and distribute the upstream Sodium functions in accordance with the terms of the PolyForm Shield License 1.0.0 below:
+
 # PolyForm Shield License 1.0.0
 
 <https://polyformproject.org/licenses/shield/1.0.0>

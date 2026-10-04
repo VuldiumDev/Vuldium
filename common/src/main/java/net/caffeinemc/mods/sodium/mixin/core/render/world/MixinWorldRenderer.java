@@ -7,8 +7,8 @@ import com.mojang.renderpearl.api.commands.RenderPass;
 import com.mojang.renderpearl.api.textures.GpuSampler;
 import com.mojang.renderpearl.api.textures.GpuTextureView;
 import net.caffeinemc.mods.sodium.client.gpu.device.vulkan.VulkanContextBridge;
-import net.caffeinemc.mods.sodium.client.render.SodkamWorldRenderer;
-import net.caffeinemc.mods.sodium.client.render.entity.SodkamBlockEntityBatcher;
+import net.caffeinemc.mods.sodium.client.render.VuldiumWorldRenderer;
+import net.caffeinemc.mods.sodium.client.render.entity.VuldiumBlockEntityBatcher;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
@@ -20,11 +20,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Mixin внедрения для подавления ванильной диспетчеризации слоев чанков
- * и делегирования координации конвейера в SodkamWorldRenderer.
+ * и делегирования координации конвейера в VuldiumWorldRenderer.
  *
  * Архитектурные задачи:
- * 1. Перехват рендеринга слоев чанков (renderGroup: OPAQUE и TRANSLUCENT) с передачей управления в Sodkam.
- * 2. Интеграция Z-буфера: сброс батчера геометрии динамических блоков (SodkamBlockEntityBatcher)
+ * 1. Перехват рендеринга слоев чанков (renderGroup: OPAQUE и TRANSLUCENT) с передачей управления в Vuldium.
+ * 2. Интеграция Z-буфера: сброс батчера геометрии динамических блоков (VuldiumBlockEntityBatcher)
  *    сразу после завершения непрозрачных объектов (Opaque Pass) с включёнными depthTest и depthWrite.
  * 3. Сохранение полной совместимости с диспетчеризацией мобов, игроков и частиц (ParticleManager).
  */
@@ -33,7 +33,7 @@ public abstract class MixinWorldRenderer {
 
     /**
      * Перехватывает вызов chunkSectionsToRender.renderGroup(...) и передает управление
-     * в SodkamWorldRenderer, гарантируя правильную последовательность фаз и барьеров Vulkan.
+     * в VuldiumWorldRenderer, гарантируя правильную последовательность фаз и барьеров Vulkan.
      */
     @WrapOperation(
             method = "lambda$addMainPass$0",
@@ -57,14 +57,14 @@ public abstract class MixinWorldRenderer {
             return;
         }
 
-        SodkamWorldRenderer sodkam = SodkamWorldRenderer.getInstanceNullable();
-        if (sodkam != null) {
-            // Маршрутизация отрисовки слоя в SodkamWorldRenderer (Opaque / Translucent)
+        VuldiumWorldRenderer vuldium = VuldiumWorldRenderer.getInstanceNullable();
+        if (vuldium != null) {
+            // Маршрутизация отрисовки слоя в VuldiumWorldRenderer (Opaque / Translucent)
             if (group == ChunkSectionLayerGroup.OPAQUE) {
-                sodkam.onRenderOpaqueGroup(renderPass, null, 0, 0, 0);
+                vuldium.onRenderOpaqueGroup(renderPass, null, 0, 0, 0);
                 return;
             } else if (group == ChunkSectionLayerGroup.TRANSLUCENT) {
-                sodkam.onRenderTranslucentGroup(renderPass, null, 0, 0, 0);
+                vuldium.onRenderTranslucentGroup(renderPass, null, 0, 0, 0);
                 return;
             }
         }
@@ -74,7 +74,7 @@ public abstract class MixinWorldRenderer {
 
     /**
      * Перехватывает завершение фазы твердых объектов (executeSolid: сущности, мобы)
-     * и выполняет пакетный сброс буферизованных динамических блоков (SodkamBlockEntityBatcher).
+     * и выполняет пакетный сброс буферизованных динамических блоков (VuldiumBlockEntityBatcher).
      */
     @Inject(
             method = "lambda$addMainPass$0",
@@ -90,16 +90,16 @@ public abstract class MixinWorldRenderer {
             return;
         }
 
-        SodkamWorldRenderer sodkam = SodkamWorldRenderer.getInstanceNullable();
-        if (sodkam != null) {
-            SodkamBlockEntityBatcher batcher = sodkam.getBlockEntityBatcher();
+        VuldiumWorldRenderer vuldium = VuldiumWorldRenderer.getInstanceNullable();
+        if (vuldium != null) {
+            VuldiumBlockEntityBatcher batcher = vuldium.getBlockEntityBatcher();
             if (batcher != null && batcher.getVertexCount() > 0) {
                 // Сброс геометрии динамических блоков в Z-буфер
                 VkCommandBuffer cmd = VulkanContextBridge.extractCommandBuffer(renderPass);
                 if (cmd != null) {
                     batcher.end();
                     batcher.flush(cmd);
-                    sodkam.getSync2().barrierEntitiesToTranslucent(cmd);
+                    vuldium.getSync2().barrierEntitiesToTranslucent(cmd);
                 }
             }
         }

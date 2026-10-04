@@ -114,7 +114,7 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
 
     private static ModOptionsBuilder createModOptionsBuilder(ConfigBuilder builder) {
         return builder.registerOwnModOptions()
-                .setName("Sodkam")
+                .setName("Vuldium")
                 .setIcon(SODIUM_ICON)
                 .formatVersion(version -> {
                     var result = version.splitWithDelimiters("\\+", 2);
@@ -138,7 +138,7 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
                 .addPage(this.buildGeneralPage(builder))
                 .addPage(this.buildQualityPage(builder))
                 .addPage(this.buildPerformancePage(builder))
-                .addPage(this.buildSodkamPage(builder));
+                .addPage(this.buildVuldiumPage(builder));
     }
 
     private OptionPageBuilder buildGeneralPage(ConfigBuilder builder) {
@@ -736,155 +736,155 @@ public class SodiumConfigBuilder implements ConfigEntryPoint {
         return performancePage;
     }
 
-    private OptionPageBuilder buildSodkamPage(ConfigBuilder builder) {
-        var sodkamPage = builder.createOptionPage().setName(Component.translatable("sodium.options.pages.sodkam"));
+    private OptionPageBuilder buildVuldiumPage(ConfigBuilder builder) {
+        var vuldiumPage = builder.createOptionPage().setName(Component.translatable("sodium.options.pages.vuldium"));
 
         // Group 1: AI Super Resolution & Reconstruction
-        sodkamPage.addOptionGroup(builder.createOptionGroup()
+        vuldiumPage.addOptionGroup(builder.createOptionGroup()
                 .addOption(
-                        builder.createEnumOption(Identifier.parse("sodkam:pipeline.super_resolution"), UpscaleQuality.class)
+                        builder.createEnumOption(Identifier.parse("vuldium:pipeline.super_resolution"), UpscaleQuality.class)
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.super_resolution.name"))
-                                .setTooltip(Component.translatable("sodkam.options.super_resolution.tooltip"))
+                                .setName(Component.translatable("vuldium.options.super_resolution.name"))
+                                .setTooltip(Component.translatable("vuldium.options.super_resolution.tooltip"))
                                 .setElementNameProvider(quality -> Component.literal(quality.getDisplayName()))
-                                .setDefaultValue(DEFAULTS.sodkam.superResolution)
-                                .setBinding(value -> this.sodiumOpts.sodkam.superResolution = value, () -> this.sodiumOpts.sodkam.superResolution)
+                                .setDefaultValue(DEFAULTS.vuldium.superResolution)
+                                .setBinding(value -> this.sodiumOpts.vuldium.superResolution = value, () -> this.sodiumOpts.vuldium.superResolution)
                                 .setImpact(OptionImpact.HIGH)
                 )
                 .addOption(
-                        builder.createEnumOption(Identifier.parse("sodkam:pipeline.upscaler"), UpscalerType.class)
+                        builder.createEnumOption(Identifier.parse("vuldium:pipeline.upscaler"), UpscalerType.class)
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.upscaler.name"))
-                                .setTooltip(Component.translatable("sodkam.options.upscaler.tooltip"))
+                                .setName(Component.translatable("vuldium.options.upscaler.name"))
+                                .setTooltip(Component.translatable("vuldium.options.upscaler.tooltip"))
                                 .setElementNameProvider(upscaler -> Component.literal(upscaler.getDisplayName()))
-                                .setDefaultValue(DEFAULTS.sodkam.upscaler)
-                                .setBinding(value -> this.sodiumOpts.sodkam.upscaler = value, () -> this.sodiumOpts.sodkam.upscaler)
+                                .setDefaultValue(DEFAULTS.vuldium.upscaler)
+                                .setBinding(value -> this.sodiumOpts.vuldium.upscaler = value, () -> this.sodiumOpts.vuldium.upscaler)
                                 .setImpact(OptionImpact.HIGH)
                 )
                 .addOption(
-                        builder.createIntegerOption(Identifier.parse("sodkam:pipeline.sharpness"))
+                        builder.createIntegerOption(Identifier.parse("vuldium:pipeline.sharpness"))
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.sharpness.name"))
-                                .setTooltip(Component.translatable("sodkam.options.sharpness.tooltip"))
+                                .setName(Component.translatable("vuldium.options.sharpness.name"))
+                                .setTooltip(Component.translatable("vuldium.options.sharpness.tooltip"))
                                 .setValueFormatter(ControlValueFormatterImpls.percentage())
                                 .setRange(0, 100, 5)
-                                .setDefaultValue(DEFAULTS.sodkam.sharpness)
-                                .setBinding(value -> this.sodiumOpts.sodkam.sharpness = value, () -> this.sodiumOpts.sodkam.sharpness)
+                                .setDefaultValue(DEFAULTS.vuldium.sharpness)
+                                .setBinding(value -> this.sodiumOpts.vuldium.sharpness = value, () -> this.sodiumOpts.vuldium.sharpness)
                                 .setImpact(OptionImpact.LOW)
                 )
         );
 
         // Group 2: Ray Tracing & Real-Time Lighting (Hardware Ray Query)
-        sodkamPage.addOptionGroup(builder.createOptionGroup()
+        vuldiumPage.addOptionGroup(builder.createOptionGroup()
                 .addOption(
-                        builder.createEnumOption(Identifier.parse("sodkam:rt.mode"), RayTracingMode.class)
+                        builder.createEnumOption(Identifier.parse("vuldium:rt.mode"), RayTracingMode.class)
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.ray_tracing.name"))
-                                .setTooltip(Component.translatable("sodkam.options.ray_tracing.tooltip"))
+                                .setName(Component.translatable("vuldium.options.ray_tracing.name"))
+                                .setTooltip(Component.translatable("vuldium.options.ray_tracing.tooltip"))
                                 .setElementNameProvider(mode -> Component.literal(mode.getDisplayName()))
-                                .setDefaultValue(DEFAULTS.sodkam.rayTracing)
-                                .setBinding(value -> this.sodiumOpts.sodkam.rayTracing = value, () -> this.sodiumOpts.sodkam.rayTracing)
+                                .setDefaultValue(DEFAULTS.vuldium.rayTracing)
+                                .setBinding(value -> this.sodiumOpts.vuldium.rayTracing = value, () -> this.sodiumOpts.vuldium.rayTracing)
                                 .setImpact(OptionImpact.VARIES)
                 )
         );
 
         // Group 3: Next-Gen GPU Pipeline & Meshlets
-        sodkamPage.addOptionGroup(builder.createOptionGroup()
+        vuldiumPage.addOptionGroup(builder.createOptionGroup()
                 .addOption(
-                        builder.createBooleanOption(Identifier.parse("sodkam:pipeline.mesh_shaders"))
+                        builder.createBooleanOption(Identifier.parse("vuldium:pipeline.mesh_shaders"))
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.mesh_shaders.name"))
-                                .setTooltip(Component.translatable("sodkam.options.mesh_shaders.tooltip"))
-                                .setDefaultValue(DEFAULTS.sodkam.meshShaders)
-                                .setBinding(value -> this.sodiumOpts.sodkam.meshShaders = value, () -> this.sodiumOpts.sodkam.meshShaders)
+                                .setName(Component.translatable("vuldium.options.mesh_shaders.name"))
+                                .setTooltip(Component.translatable("vuldium.options.mesh_shaders.tooltip"))
+                                .setDefaultValue(DEFAULTS.vuldium.meshShaders)
+                                .setBinding(value -> this.sodiumOpts.vuldium.meshShaders = value, () -> this.sodiumOpts.vuldium.meshShaders)
                                 .setImpact(OptionImpact.HIGH)
                                 .setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD)
                 )
                 .addOption(
-                        builder.createBooleanOption(Identifier.parse("sodkam:pipeline.hiz_culling"))
+                        builder.createBooleanOption(Identifier.parse("vuldium:pipeline.hiz_culling"))
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.hiz_culling.name"))
-                                .setTooltip(Component.translatable("sodkam.options.hiz_culling.tooltip"))
-                                .setDefaultValue(DEFAULTS.sodkam.hiZOcclusionCulling)
-                                .setBinding(value -> this.sodiumOpts.sodkam.hiZOcclusionCulling = value, () -> this.sodiumOpts.sodkam.hiZOcclusionCulling)
+                                .setName(Component.translatable("vuldium.options.hiz_culling.name"))
+                                .setTooltip(Component.translatable("vuldium.options.hiz_culling.tooltip"))
+                                .setDefaultValue(DEFAULTS.vuldium.hiZOcclusionCulling)
+                                .setBinding(value -> this.sodiumOpts.vuldium.hiZOcclusionCulling = value, () -> this.sodiumOpts.vuldium.hiZOcclusionCulling)
                                 .setImpact(OptionImpact.HIGH)
                 )
                 .addOption(
-                        builder.createBooleanOption(Identifier.parse("sodkam:pipeline.gpu_culling"))
+                        builder.createBooleanOption(Identifier.parse("vuldium:pipeline.gpu_culling"))
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.gpu_culling.name"))
-                                .setTooltip(Component.translatable("sodkam.options.gpu_culling.tooltip"))
-                                .setDefaultValue(DEFAULTS.sodkam.gpuCulling)
-                                .setBinding(value -> this.sodiumOpts.sodkam.gpuCulling = value, () -> this.sodiumOpts.sodkam.gpuCulling)
+                                .setName(Component.translatable("vuldium.options.gpu_culling.name"))
+                                .setTooltip(Component.translatable("vuldium.options.gpu_culling.tooltip"))
+                                .setDefaultValue(DEFAULTS.vuldium.gpuCulling)
+                                .setBinding(value -> this.sodiumOpts.vuldium.gpuCulling = value, () -> this.sodiumOpts.vuldium.gpuCulling)
                                 .setImpact(OptionImpact.HIGH)
                                 .setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD)
                 )
         );
 
         // Group 4: Latency & Frame Pacing
-        sodkamPage.addOptionGroup(builder.createOptionGroup()
+        vuldiumPage.addOptionGroup(builder.createOptionGroup()
                 .addOption(
-                        builder.createEnumOption(Identifier.parse("sodkam:pipeline.frame_generation"), FrameGenMode.class)
+                        builder.createEnumOption(Identifier.parse("vuldium:pipeline.frame_generation"), FrameGenMode.class)
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.frame_generation.name"))
-                                .setTooltip(Component.translatable("sodkam.options.frame_generation.tooltip"))
+                                .setName(Component.translatable("vuldium.options.frame_generation.name"))
+                                .setTooltip(Component.translatable("vuldium.options.frame_generation.tooltip"))
                                 .setElementNameProvider(mode -> Component.literal(mode.getDisplayName()))
-                                .setDefaultValue(DEFAULTS.sodkam.frameGen)
+                                .setDefaultValue(DEFAULTS.vuldium.frameGen)
                                 .setBinding(value -> {
-                                    this.sodiumOpts.sodkam.frameGen = value;
-                                    this.sodiumOpts.sodkam.frameGeneration = value.isEnabled();
-                                }, () -> this.sodiumOpts.sodkam.frameGen)
+                                    this.sodiumOpts.vuldium.frameGen = value;
+                                    this.sodiumOpts.vuldium.frameGeneration = value.isEnabled();
+                                }, () -> this.sodiumOpts.vuldium.frameGen)
                                 .setImpact(OptionImpact.HIGH)
                 )
                 .addOption(
-                        builder.createEnumOption(Identifier.parse("sodkam:latency.low_latency"), LowLatencyMode.class)
+                        builder.createEnumOption(Identifier.parse("vuldium:latency.low_latency"), LowLatencyMode.class)
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.low_latency.name"))
-                                .setTooltip(Component.translatable("sodkam.options.low_latency.tooltip"))
+                                .setName(Component.translatable("vuldium.options.low_latency.name"))
+                                .setTooltip(Component.translatable("vuldium.options.low_latency.tooltip"))
                                 .setElementNameProvider(mode -> Component.literal(mode.getDisplayName()))
-                                .setDefaultValue(DEFAULTS.sodkam.lowLatency)
-                                .setBinding(value -> this.sodiumOpts.sodkam.lowLatency = value, () -> this.sodiumOpts.sodkam.lowLatency)
+                                .setDefaultValue(DEFAULTS.vuldium.lowLatency)
+                                .setBinding(value -> this.sodiumOpts.vuldium.lowLatency = value, () -> this.sodiumOpts.vuldium.lowLatency)
                                 .setImpact(OptionImpact.LOW)
                 )
                 .addOption(
-                        builder.createBooleanOption(Identifier.parse("sodkam:async.compute_particles"))
+                        builder.createBooleanOption(Identifier.parse("vuldium:async.compute_particles"))
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.async_particles.name"))
-                                .setTooltip(Component.translatable("sodkam.options.async_particles.tooltip"))
-                                .setDefaultValue(DEFAULTS.sodkam.asyncComputeParticles)
-                                .setBinding(value -> this.sodiumOpts.sodkam.asyncComputeParticles = value, () -> this.sodiumOpts.sodkam.asyncComputeParticles)
+                                .setName(Component.translatable("vuldium.options.async_particles.name"))
+                                .setTooltip(Component.translatable("vuldium.options.async_particles.tooltip"))
+                                .setDefaultValue(DEFAULTS.vuldium.asyncComputeParticles)
+                                .setBinding(value -> this.sodiumOpts.vuldium.asyncComputeParticles = value, () -> this.sodiumOpts.vuldium.asyncComputeParticles)
                                 .setImpact(OptionImpact.MEDIUM)
                 )
         );
 
         // Group 5: Advanced VRS & VRAM Management
-        sodkamPage.addOptionGroup(builder.createOptionGroup()
+        vuldiumPage.addOptionGroup(builder.createOptionGroup()
                 .addOption(
-                        builder.createEnumOption(Identifier.parse("sodkam:pipeline.vrs_mode"), VrsMode.class)
+                        builder.createEnumOption(Identifier.parse("vuldium:pipeline.vrs_mode"), VrsMode.class)
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.vrs.name"))
-                                .setTooltip(Component.translatable("sodkam.options.vrs.tooltip"))
+                                .setName(Component.translatable("vuldium.options.vrs.name"))
+                                .setTooltip(Component.translatable("vuldium.options.vrs.tooltip"))
                                 .setElementNameProvider(mode -> Component.literal(mode.getDisplayName()))
-                                .setDefaultValue(DEFAULTS.sodkam.vrsMode)
+                                .setDefaultValue(DEFAULTS.vuldium.vrsMode)
                                 .setBinding(value -> {
-                                    this.sodiumOpts.sodkam.vrsMode = value;
-                                    this.sodiumOpts.sodkam.variableRateShading = value.isEnabled();
-                                }, () -> this.sodiumOpts.sodkam.vrsMode)
+                                    this.sodiumOpts.vuldium.vrsMode = value;
+                                    this.sodiumOpts.vuldium.variableRateShading = value.isEnabled();
+                                }, () -> this.sodiumOpts.vuldium.vrsMode)
                                 .setImpact(OptionImpact.HIGH)
                 )
                 .addOption(
-                        builder.createBooleanOption(Identifier.parse("sodkam:memory.virtual_texturing"))
+                        builder.createBooleanOption(Identifier.parse("vuldium:memory.virtual_texturing"))
                                 .setStorageHandler(this.sodiumStorage)
-                                .setName(Component.translatable("sodkam.options.virtual_texturing.name"))
-                                .setTooltip(Component.translatable("sodkam.options.virtual_texturing.tooltip"))
-                                .setDefaultValue(DEFAULTS.sodkam.virtualTexturing)
-                                .setBinding(value -> this.sodiumOpts.sodkam.virtualTexturing = value, () -> this.sodiumOpts.sodkam.virtualTexturing)
+                                .setName(Component.translatable("vuldium.options.virtual_texturing.name"))
+                                .setTooltip(Component.translatable("vuldium.options.virtual_texturing.tooltip"))
+                                .setDefaultValue(DEFAULTS.vuldium.virtualTexturing)
+                                .setBinding(value -> this.sodiumOpts.vuldium.virtualTexturing = value, () -> this.sodiumOpts.vuldium.virtualTexturing)
                                 .setImpact(OptionImpact.MEDIUM)
                                 .setFlags(OptionFlag.REQUIRES_RENDERER_RELOAD)
                 )
         );
 
-        return sodkamPage;
+        return vuldiumPage;
     }
 
     private OptionBuilder buildNoErrorContextOption(ConfigBuilder builder) {
