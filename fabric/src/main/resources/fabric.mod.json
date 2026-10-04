@@ -58,11 +58,8 @@
     "fabric-renderer-api-v1:contains_renderer" : true,
     "modmenu" : {
       "links" : {
-        "modmenu.donate" : "https://caffeinemc.net/donate",
-        "modmenu.discord" : "https://caffeinemc.net/discord",
-        "modmenu.github_releases" : "https://github.com/CaffeineMC/sodium/releases",
-        "modmenu.kofi" : "https://caffeinemc.net/donate",
-        "modmenu.modrinth" : "https://modrinth.com/mod/sodium"
+        "modmenu.github_releases" : "https://github.com/VuldiumDev/Vuldium/releases",
+        "modmenu.modrinth" : "https://modrinth.com/mod/vuldium"
       }
     }
   },
