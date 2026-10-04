@@ -3,8 +3,9 @@
   "id" : "sodium",
   "version" : "${version}",
   "name" : "Vuldium",
-  "description" : "Vuldium is a next-generation Vulkan rendering engine for Minecraft featuring Hardware GPU Culling, Translucent Sorting, and Multi-AI Upscaling (DLSS/FSR/XeSS).",
+  "description" : "Vuldium is a high-performance Vulkan & OpenGL rendering engine for Minecraft featuring upscaling, hardware ray tracing, Hi-Z GPU culling, translucent sorting, and optimized chunk pipelines.",
   "authors" : [
+    "Vuldium Team",
     {
       "name" : "JellySquid (jellysquid3)",
       "contact" : {
@@ -57,11 +58,8 @@
     "fabric-renderer-api-v1:contains_renderer" : true,
     "modmenu" : {
       "links" : {
-        "modmenu.donate" : "https://caffeinemc.net/donate",
-        "modmenu.discord" : "https://caffeinemc.net/discord",
-        "modmenu.github_releases" : "https://github.com/CaffeineMC/sodium/releases",
-        "modmenu.kofi" : "https://caffeinemc.net/donate",
-        "modmenu.modrinth" : "https://modrinth.com/mod/sodium"
+        "modmenu.github_releases" : "https://github.com/VuldiumDev/Vuldium/releases",
+        "modmenu.modrinth" : "https://modrinth.com/mod/vuldium"
       }
     }
   },
