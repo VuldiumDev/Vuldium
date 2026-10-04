@@ -24,7 +24,7 @@ public class SodiumOptions {
     public final QualitySettings quality = new QualitySettings();
     public final PerformanceSettings performance = new PerformanceSettings();
     public final AdvancedSettings advanced = new AdvancedSettings();
-    public final SodkamSettings sodkam = new SodkamSettings();
+    public final VuldiumSettings vuldium = new VuldiumSettings();
 
     public final AnimationSettings animations = new AnimationSettings();
     public final ParticleSettings particles = new ParticleSettings();
@@ -70,7 +70,7 @@ public class SodiumOptions {
         public boolean enableMemoryTracing = false;
     }
 
-    public static class SodkamSettings {
+    public static class VuldiumSettings {
         // AI Super Resolution & Reconstruction
         public UpscaleQuality superResolution = UpscaleQuality.NATIVE;
         public UpscalerType upscaler = UpscalerType.FSR;
@@ -176,8 +176,8 @@ public class SodiumOptions {
             config = new SodiumOptions();
         }
 
-        if (config.sodkam.frameGeneration && config.sodkam.frameGen == net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.FrameGenMode.OFF) {
-            config.sodkam.frameGen = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.FrameGenMode.X2;
+        if (config.vuldium.frameGeneration && config.vuldium.frameGen == net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.FrameGenMode.OFF) {
+            config.vuldium.frameGen = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.FrameGenMode.X2;
         }
 
         try {

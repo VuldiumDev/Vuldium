@@ -35,10 +35,10 @@ public class MinecraftMixin {
     private int frames;
 
     @Inject(method = "runTick", at = @At("HEAD"))
-    private void sodkam$onTickStart(CallbackInfo ci) {
-        var mode = SodiumClientMod.options().sodkam.lowLatency;
+    private void vuldium$onTickStart(CallbackInfo ci) {
+        var mode = SodiumClientMod.options().vuldium.lowLatency;
         if (mode != null) {
-            var latency = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.latency.SodkamLowLatency.getInstance();
+            var latency = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.latency.VuldiumLowLatency.getInstance();
             latency.setMode(mode);
             latency.onSimulationStart();
         }
@@ -51,17 +51,17 @@ public class MinecraftMixin {
                     target = "Lcom/mojang/blaze3d/systems/GpuSurface;present()V"
             )
     )
-    private void sodkam$presentWithFrameGeneration(com.mojang.blaze3d.systems.GpuSurface surface, Operation<Void> original) {
-        var latencyMode = SodiumClientMod.options().sodkam.lowLatency;
+    private void vuldium$presentWithFrameGeneration(com.mojang.blaze3d.systems.GpuSurface surface, Operation<Void> original) {
+        var latencyMode = SodiumClientMod.options().vuldium.lowLatency;
         if (latencyMode != null) {
-            var latency = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.latency.SodkamLowLatency.getInstance();
+            var latency = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.latency.VuldiumLowLatency.getInstance();
             latency.setMode(latencyMode);
             latency.onRenderSubmit();
         }
 
         original.call(surface);
 
-        var mode = SodiumClientMod.options().sodkam.frameGen;
+        var mode = SodiumClientMod.options().vuldium.frameGen;
         int multiplier = mode.getMultiplier();
         if (multiplier > 1 && !surface.isSuboptimal()) {
             var main = Minecraft.getInstance().gameRenderer.mainRenderTarget();

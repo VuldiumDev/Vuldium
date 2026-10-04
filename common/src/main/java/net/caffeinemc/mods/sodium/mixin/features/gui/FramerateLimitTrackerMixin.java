@@ -15,21 +15,21 @@ public class FramerateLimitTrackerMixin {
     private int framerateLimit;
 
     @Inject(method = "getThrottleReason", at = @At("HEAD"), cancellable = true)
-    private void sodkam$onGetThrottleReason(CallbackInfoReturnable<FramerateLimitTracker.FramerateThrottleReason> cir) {
+    private void vuldium$onGetThrottleReason(CallbackInfoReturnable<FramerateLimitTracker.FramerateThrottleReason> cir) {
         if (SodiumClientMod.options().performance.inactivityFpsLimit == InactivityFpsLimitMode.OFF) {
             cir.setReturnValue(FramerateLimitTracker.FramerateThrottleReason.NONE);
         }
     }
 
     @Inject(method = "getFramerateLimit", at = @At("HEAD"), cancellable = true)
-    private void sodkam$onGetFramerateLimit(CallbackInfoReturnable<Integer> cir) {
+    private void vuldium$onGetFramerateLimit(CallbackInfoReturnable<Integer> cir) {
         if (SodiumClientMod.options().performance.inactivityFpsLimit == InactivityFpsLimitMode.OFF) {
             cir.setReturnValue(this.framerateLimit);
         }
     }
 
     @Inject(method = "isHeavilyThrottled", at = @At("HEAD"), cancellable = true)
-    private void sodkam$onIsHeavilyThrottled(CallbackInfoReturnable<Boolean> cir) {
+    private void vuldium$onIsHeavilyThrottled(CallbackInfoReturnable<Boolean> cir) {
         if (SodiumClientMod.options().performance.inactivityFpsLimit == InactivityFpsLimitMode.OFF) {
             cir.setReturnValue(false);
         }
