@@ -1,7 +1,7 @@
 package net.caffeinemc.mods.sodium.mixin.features.render;
 
 import com.mojang.renderpearl.api.device.GpuSurface;
-import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.pacing.SodkamFramePacing;
+import net.caffeinemc.mods.sodium.client.render.chunk.vulkan.pacing.VuldiumFramePacing;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,6 +23,6 @@ public abstract class PresentModeMixin {
             boolean vsync,
             CallbackInfoReturnable<GpuSurface.PresentMode> cir
     ) {
-        cir.setReturnValue(SodkamFramePacing.selectOptimalPresentMode(supported, vsync));
+        cir.setReturnValue(VuldiumFramePacing.selectOptimalPresentMode(supported, vsync));
     }
 }

@@ -2,7 +2,7 @@ package net.caffeinemc.mods.sodium.mixin.features.dfu;
 
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.DataFixer;
-import net.caffeinemc.mods.sodium.client.systems.dfu.SodkamLazyDfu;
+import net.caffeinemc.mods.sodium.client.systems.dfu.VuldiumLazyDfu;
 import net.minecraft.util.datafix.DataFixers;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,11 +16,11 @@ import java.util.concurrent.CompletableFuture;
 public abstract class DataFixersMixin {
     @Inject(method = "optimize", at = @At("HEAD"), cancellable = true)
     private static void cancelEagerOptimization(Set<DSL.TypeReference> types, CallbackInfoReturnable<CompletableFuture<?>> cir) {
-        cir.setReturnValue(SodkamLazyDfu.onOptimize(types));
+        cir.setReturnValue(VuldiumLazyDfu.onOptimize(types));
     }
 
     @Inject(method = "getDataFixer", at = @At("RETURN"), cancellable = true)
     private static void wrapDataFixer(CallbackInfoReturnable<DataFixer> cir) {
-        cir.setReturnValue(SodkamLazyDfu.wrap(cir.getReturnValue()));
+        cir.setReturnValue(VuldiumLazyDfu.wrap(cir.getReturnValue()));
     }
 }
