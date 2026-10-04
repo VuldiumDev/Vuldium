@@ -56,7 +56,7 @@ public class VideoSettingsScreen extends Screen implements ScreenPromptable, Scr
     private boolean hasPendingChanges;
 
     private final ScrollableTooltip tooltip = new ScrollableTooltip(this);
-    private final SodkamMenuParticles particles = new SodkamMenuParticles();
+    private final VuldiumMenuParticles particles = new VuldiumMenuParticles();
 
     private @Nullable ScreenPrompt prompt;
 
@@ -294,12 +294,12 @@ public class VideoSettingsScreen extends Screen implements ScreenPromptable, Scr
     @Override
     public void extractBackground(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         super.extractBackground(graphics, mouseX, mouseY, delta);
-        this.renderSodkamBackdrop(graphics);
+        this.renderVuldiumBackdrop(graphics);
         this.particles.update(mouseX, mouseY);
         this.particles.render(graphics, delta);
     }
 
-    private void renderSodkamBackdrop(GuiGraphicsExtractor graphics) {
+    private void renderVuldiumBackdrop(GuiGraphicsExtractor graphics) {
         // Глубокий вулканический фоновый градиент с виньетированием
         graphics.fillGradient(0, 0, this.width, this.height, Colors.BACKDROP_TOP, Colors.BACKDROP_BOTTOM);
 
@@ -325,10 +325,10 @@ public class VideoSettingsScreen extends Screen implements ScreenPromptable, Scr
             this.tooltip.render(graphics);
         }
 
-        this.renderSodkamBranding(graphics);
+        this.renderVuldiumBranding(graphics);
     }
 
-    private void renderSodkamBranding(GuiGraphicsExtractor graphics) {
+    private void renderVuldiumBranding(GuiGraphicsExtractor graphics) {
         if (this.dim == null) {
             return;
         }
@@ -366,7 +366,7 @@ public class VideoSettingsScreen extends Screen implements ScreenPromptable, Scr
 
     private static String getGpuStatusString() {
         try {
-            var renderer = net.caffeinemc.mods.sodium.client.render.SodkamWorldRenderer.getInstanceNullable();
+            var renderer = net.caffeinemc.mods.sodium.client.render.VuldiumWorldRenderer.getInstanceNullable();
             if (renderer != null && renderer.getContext() != null) {
                 String dev = renderer.getContext().getDeviceName();
                 if (dev != null && !dev.isBlank()) {

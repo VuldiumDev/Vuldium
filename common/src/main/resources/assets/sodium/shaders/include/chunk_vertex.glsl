@@ -17,9 +17,9 @@ uint _draw_id;
 // The material bits for the primitive
 uint _material_params;
 
-#ifdef USE_SODKAM_PACKED_VERTEX
-const float SODKAM_VERTEX_SCALE = 32.0 / 1023.0;
-const float SODKAM_VERTEX_OFFSET = -8.0;
+#ifdef USE_VULDIUM_PACKED_VERTEX
+const float VULDIUM_VERTEX_SCALE = 32.0 / 1023.0;
+const float VULDIUM_VERTEX_OFFSET = -8.0;
 
 layout(location = 0) in uint a_PackedPos;
 layout(location = 1) in vec4 a_Color;
@@ -31,7 +31,7 @@ void _vert_init() {
         float(a_PackedPos & 0x3FFu),
         float((a_PackedPos >> 10u) & 0x3FFu),
         float((a_PackedPos >> 20u) & 0x3FFu)
-    ) * SODKAM_VERTEX_SCALE + SODKAM_VERTEX_OFFSET;
+    ) * VULDIUM_VERTEX_SCALE + VULDIUM_VERTEX_OFFSET;
 
     _vert_position = localPos;
     _vert_color = a_Color;

@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Field;
 
 /**
- * Мост между внутренним контекстом RenderPearl/Blaze3D и подсистемой Sodkam.
+ * Мост между внутренним контекстом RenderPearl/Blaze3D и подсистемой Vuldium.
  * Обеспечивает безопасное прямое извлечение нативных хэндлов Vulkan без ломких Mixin-инъекций.
  */
 public final class VulkanContextBridge {
@@ -85,7 +85,7 @@ public final class VulkanContextBridge {
             VkQueue transferQueue = (tq != null) ? tq.vkQueue() : graphicsQueue;
             int transferQueueFamilyIndex = (tq != null) ? tq.queueFamilyIndex() : graphicsQueueFamilyIndex;
 
-            LOGGER.info("Sodkam: нативные Vulkan-дескрипторы успешно извлечены (GraphicsFamily={}, TransferFamily={}).",
+            LOGGER.info("Vuldium: нативные Vulkan-дескрипторы успешно извлечены (GraphicsFamily={}, TransferFamily={}).",
                     graphicsQueueFamilyIndex, transferQueueFamilyIndex);
             return new NativeHandles(device, physicalDevice, graphicsQueue, graphicsQueueFamilyIndex, transferQueue, transferQueueFamilyIndex);
         }
@@ -111,7 +111,7 @@ public final class VulkanContextBridge {
             }
             return (VkCommandBuffer) CMD_BUF_FIELD.get(renderPass);
         } catch (Throwable t) {
-            LOGGER.warn("Sodkam: не удалось извлечь commandBuffer из VulkanRenderPass: {}", t.getMessage());
+            LOGGER.warn("Vuldium: не удалось извлечь commandBuffer из VulkanRenderPass: {}", t.getMessage());
             return null;
         }
     }

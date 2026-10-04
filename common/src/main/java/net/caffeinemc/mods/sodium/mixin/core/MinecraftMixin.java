@@ -34,10 +34,10 @@ public class MinecraftMixin {
     private int frames;
 
     @Inject(method = "runTick", at = @At("HEAD"))
-    private void sodkam$onTickStart(CallbackInfo ci) {
-        var mode = SodiumClientMod.options().sodkam.lowLatency;
+    private void vuldium$onTickStart(CallbackInfo ci) {
+        var mode = SodiumClientMod.options().vuldium.lowLatency;
         if (mode != null) {
-            var latency = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.latency.SodkamLowLatency.getInstance();
+            var latency = net.caffeinemc.mods.sodium.client.render.chunk.vulkan.latency.VuldiumLowLatency.getInstance();
             latency.setMode(mode);
             latency.onSimulationStart();
         }

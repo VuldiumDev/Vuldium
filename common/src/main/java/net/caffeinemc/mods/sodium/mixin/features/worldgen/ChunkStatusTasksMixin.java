@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.sodium.mixin.features.worldgen;
 
-import net.caffeinemc.mods.sodium.client.systems.worldgen.SodkamAsyncChunkExecutor;
+import net.caffeinemc.mods.sodium.client.systems.worldgen.VuldiumAsyncChunkExecutor;
 import net.minecraft.server.level.GenerationChunkHolder;
 import net.minecraft.util.StaticCache2D;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -24,6 +24,6 @@ public abstract class ChunkStatusTasksMixin {
             ChunkAccess chunk,
             CallbackInfoReturnable<CompletableFuture<ChunkAccess>> cir
     ) {
-        cir.setReturnValue(SodkamAsyncChunkExecutor.executeFeaturesAsync(context, step, cache, chunk));
+        cir.setReturnValue(VuldiumAsyncChunkExecutor.executeFeaturesAsync(context, step, cache, chunk));
     }
 }

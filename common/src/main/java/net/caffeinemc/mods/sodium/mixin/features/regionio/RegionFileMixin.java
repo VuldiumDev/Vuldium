@@ -1,6 +1,6 @@
 package net.caffeinemc.mods.sodium.mixin.features.regionio;
 
-import net.caffeinemc.mods.sodium.client.systems.regionio.SodkamRegionFileManager;
+import net.caffeinemc.mods.sodium.client.systems.regionio.VuldiumRegionFileManager;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.RegionFile;
 import org.spongepowered.asm.mixin.Final;
@@ -37,7 +37,7 @@ public abstract class RegionFileMixin {
         int sectorNumber = getSectorNumber(offset);
         int numSectors = getNumSectors(offset);
 
-        DataInputStream mappedStream = SodkamRegionFileManager.readMappedChunkStream(
+        DataInputStream mappedStream = VuldiumRegionFileManager.readMappedChunkStream(
                 this.path,
                 this.file,
                 sectorNumber,
@@ -53,11 +53,11 @@ public abstract class RegionFileMixin {
 
     @Inject(method = "close", at = @At("HEAD"))
     private void onClose(CallbackInfo ci) {
-        SodkamRegionFileManager.onRegionClosed(this.path);
+        VuldiumRegionFileManager.onRegionClosed(this.path);
     }
 
     @Inject(method = "flush", at = @At("HEAD"))
     private void onFlush(CallbackInfo ci) {
-        SodkamRegionFileManager.onRegionFlushed(this.path);
+        VuldiumRegionFileManager.onRegionFlushed(this.path);
     }
 }

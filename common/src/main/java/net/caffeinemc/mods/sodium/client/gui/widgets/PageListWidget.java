@@ -241,7 +241,7 @@ public class PageListWidget extends AbstractScrollable {
                 return ICON_QUALITY;
             } else if (raw.contains("perf") || raw.contains("производ")) {
                 return ICON_PERFORMANCE;
-            } else if (raw.contains("vuldium") || raw.contains("вульдиум") || raw.contains("vulkan") || raw.contains("содкам") || raw.contains("sodkam")) {
+            } else if (raw.contains("vuldium") || raw.contains("вульдиум") || raw.contains("vulkan") || raw.contains("содкам") || raw.contains("vuldium")) {
                 return ICON_VULDIUM;
             }
             return ICON_DEFAULT;
