@@ -5,7 +5,7 @@ plugins {
 }
 
 base {
-    archivesName = "sodium-neoforge"
+    archivesName = "vuldium-neoforge"
 }
 
 repositories {
