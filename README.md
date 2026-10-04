@@ -2,15 +2,16 @@
 
 # Vuldium
 
-**Vuldium** is a next-generation high-performance rendering engine and optimization suite for Minecraft, built for both **Vulkan** and modern **OpenGL**.
+**Vuldium** is a high-performance rendering engine and optimization mod for Minecraft, supporting both **Vulkan** and modern **OpenGL**.
 
 ### ⚡ Key Features
-- **Multi-AI Frame Generation (x2 / x3)**: Synthesizes high-fluidity intermediate frames directly in the swapchain for buttery smooth motion.
-- **AI & Spatial Upscaling**: Native FSR, XeSS, and DLSS pipelines for crystal-clear resolution scaling.
-- **Zero-Allocation Chunk Pipelines**: Fully optimized hot-path chunk rendering with cached geometry and direct native command streams.
-- **Hardware Ray Tracing (VK_KHR_ray_query)**: Real-time voxel RTAO and contact shadows.
-- **Hi-Z & Mesh Shader Culling**: GPU-driven occlusion culling eliminating invisible geometry before rasterization.
-- **Full Mod Compatibility**: Integrated support for Fabric and NeoForge with FRAPI and OptiFine-like configuration tabs (Animations, Particles, Details, Render, Extra).
+- **Frame Generation & Pacing**: Motion-interpolated swapchain pacing for smooth frame times.
+- **Hardware Upscaling**: Integrated FSR, XeSS, and DLSS pipelines for sharp resolution scaling.
+- **Optimized Chunk Pipelines**: Direct buffer streams, vertex compression, and fast mesh uploads.
+- **Hardware Ray Tracing**: Voxel RTAO and contact shadows support via `VK_KHR_ray_query`.
+- **Hi-Z & Indirect Culling**: GPU-driven occlusion culling to reduce vertex workload before rasterization.
+- **Extended Settings**: Dedicated configuration tabs for Animations, Particles, Details, Render, and Extra settings.
+- **Full Mod Compatibility**: Supports Fabric and NeoForge with Fabric Rendering API (FRAPI) support.
 
 ---
 
