@@ -3,7 +3,7 @@
   "id" : "sodium",
   "version" : "${version}",
   "name" : "Vuldium",
-  "description" : "Vuldium is a next-generation Vulkan & OpenGL rendering engine for Minecraft featuring Multi-AI Frame Generation (x2/x3), FSR/DLSS/XeSS Upscaling, Hardware Ray Tracing, Hi-Z GPU Culling, Translucent Sorting, and zero-allocation chunk pipelines.",
+  "description" : "Vuldium is a high-performance Vulkan & OpenGL rendering engine for Minecraft featuring upscaling, hardware ray tracing, Hi-Z GPU culling, translucent sorting, and optimized chunk pipelines.",
   "authors" : [
     "Vuldium Team",
     {

@@ -50,7 +50,7 @@ gradle.projectsEvaluated {
             repository = "CaffeineMC/sodium"
             commitish = BuildConfig.calculateGitHash(project)
             version = BuildConfig.RELEASE_TAG
-            displayName = "Sodkam ${BuildConfig.MOD_VERSION} for Minecraft ${BuildConfig.MINECRAFT_VERSION}"
+            displayName = "Vuldium ${BuildConfig.MOD_VERSION} for Minecraft ${BuildConfig.MINECRAFT_VERSION}"
             file.unset()
             file.unsetConvention()
 
@@ -65,7 +65,7 @@ fun me.modmuss50.mpp.ModPublishExtension.setupFor(loaderName: String, releasePla
     if (releasePlatform == "both" || releasePlatform == loaderLowercase) {
         val jar = project(":$loaderLowercase").tasks.named<Jar>("jar").get().archiveFile
 
-        val releaseTitle = "Sodkam ${BuildConfig.MOD_VERSION} for $loaderName ${BuildConfig.MINECRAFT_VERSION}"
+        val releaseTitle = "Vuldium ${BuildConfig.MOD_VERSION} for $loaderName ${BuildConfig.MINECRAFT_VERSION}"
         val releaseVersion = "${BuildConfig.RELEASE_TAG}-$loaderLowercase"
 
         if (publishCurseforge) {

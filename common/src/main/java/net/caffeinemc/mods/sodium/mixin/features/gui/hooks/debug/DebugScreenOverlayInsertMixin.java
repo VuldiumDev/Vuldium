@@ -36,51 +36,51 @@ public class DebugScreenOverlayInsertMixin {
             }
         }
 
-        var sodkamOpts = SodiumClientMod.options().sodkam;
-        StringBuilder sodkamLine = new StringBuilder();
-        sodkamLine.append(ChatFormatting.GOLD).append("[Vuldium Vulkan] ").append(ChatFormatting.RESET);
+        var vuldiumOpts = SodiumClientMod.options().vuldium;
+        StringBuilder vuldiumLine = new StringBuilder();
+        vuldiumLine.append(ChatFormatting.GOLD).append("[Vuldium Vulkan] ").append(ChatFormatting.RESET);
         boolean hasActiveFeatures = false;
 
-        if (sodkamOpts.superResolution != net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.UpscaleQuality.NATIVE) {
-            sodkamLine.append(ChatFormatting.GRAY).append("Upscale: ").append(ChatFormatting.GREEN).append(sodkamOpts.superResolution.getDisplayName())
-                    .append(ChatFormatting.GRAY).append(" [").append(ChatFormatting.YELLOW).append(sodkamOpts.upscaler.getDisplayName()).append(ChatFormatting.GRAY).append("] ");
+        if (vuldiumOpts.superResolution != net.caffeinemc.mods.sodium.client.render.chunk.vulkan.upscale.UpscaleQuality.NATIVE) {
+            vuldiumLine.append(ChatFormatting.GRAY).append("Upscale: ").append(ChatFormatting.GREEN).append(vuldiumOpts.superResolution.getDisplayName())
+                    .append(ChatFormatting.GRAY).append(" [").append(ChatFormatting.YELLOW).append(vuldiumOpts.upscaler.getDisplayName()).append(ChatFormatting.GRAY).append("] ");
             hasActiveFeatures = true;
         }
-        if (sodkamOpts.frameGen.isEnabled()) {
-            sodkamLine.append(ChatFormatting.GRAY).append("FrameGen: ").append(ChatFormatting.GOLD).append(sodkamOpts.frameGen.getDisplayName()).append(" ");
+        if (vuldiumOpts.frameGen.isEnabled()) {
+            vuldiumLine.append(ChatFormatting.GRAY).append("FrameGen: ").append(ChatFormatting.GOLD).append(vuldiumOpts.frameGen.getDisplayName()).append(" ");
             hasActiveFeatures = true;
         }
-        if (sodkamOpts.rayTracing != net.caffeinemc.mods.sodium.client.render.chunk.vulkan.rt.RayTracingMode.OFF) {
-            sodkamLine.append(ChatFormatting.GRAY).append("RT: ").append(ChatFormatting.LIGHT_PURPLE).append(sodkamOpts.rayTracing.getDisplayName()).append(" ");
+        if (vuldiumOpts.rayTracing != net.caffeinemc.mods.sodium.client.render.chunk.vulkan.rt.RayTracingMode.OFF) {
+            vuldiumLine.append(ChatFormatting.GRAY).append("RT: ").append(ChatFormatting.LIGHT_PURPLE).append(vuldiumOpts.rayTracing.getDisplayName()).append(" ");
             hasActiveFeatures = true;
         }
-        if (sodkamOpts.meshShaders) {
-            sodkamLine.append(ChatFormatting.GRAY).append("Meshlets: ").append(ChatFormatting.AQUA).append("ON ");
+        if (vuldiumOpts.meshShaders) {
+            vuldiumLine.append(ChatFormatting.GRAY).append("Meshlets: ").append(ChatFormatting.AQUA).append("ON ");
             hasActiveFeatures = true;
         }
-        if (sodkamOpts.hiZOcclusionCulling) {
-            sodkamLine.append(ChatFormatting.GRAY).append("Hi-Z: ").append(ChatFormatting.GREEN).append("ON ");
+        if (vuldiumOpts.hiZOcclusionCulling) {
+            vuldiumLine.append(ChatFormatting.GRAY).append("Hi-Z: ").append(ChatFormatting.GREEN).append("ON ");
             hasActiveFeatures = true;
         }
-        if (sodkamOpts.lowLatency.isEnabled()) {
-            sodkamLine.append(ChatFormatting.GRAY).append("Latency: ").append(ChatFormatting.YELLOW).append(sodkamOpts.lowLatency.getDisplayName()).append(" ");
+        if (vuldiumOpts.lowLatency.isEnabled()) {
+            vuldiumLine.append(ChatFormatting.GRAY).append("Latency: ").append(ChatFormatting.YELLOW).append(vuldiumOpts.lowLatency.getDisplayName()).append(" ");
             hasActiveFeatures = true;
         }
-        if (sodkamOpts.vrsMode.isEnabled()) {
-            sodkamLine.append(ChatFormatting.GRAY).append("VRS: ").append(ChatFormatting.DARK_GREEN).append(sodkamOpts.vrsMode.getDisplayName()).append(" ");
+        if (vuldiumOpts.vrsMode.isEnabled()) {
+            vuldiumLine.append(ChatFormatting.GRAY).append("VRS: ").append(ChatFormatting.DARK_GREEN).append(vuldiumOpts.vrsMode.getDisplayName()).append(" ");
             hasActiveFeatures = true;
         }
-        if (sodkamOpts.asyncComputeParticles) {
-            sodkamLine.append(ChatFormatting.GRAY).append("Async: ").append(ChatFormatting.BLUE).append("ON ");
+        if (vuldiumOpts.asyncComputeParticles) {
+            vuldiumLine.append(ChatFormatting.GRAY).append("Async: ").append(ChatFormatting.BLUE).append("ON ");
             hasActiveFeatures = true;
         }
-        if (sodkamOpts.virtualTexturing) {
-            sodkamLine.append(ChatFormatting.GRAY).append("Sparse: ").append(ChatFormatting.WHITE).append("ON ");
+        if (vuldiumOpts.virtualTexturing) {
+            vuldiumLine.append(ChatFormatting.GRAY).append("Sparse: ").append(ChatFormatting.WHITE).append("ON ");
             hasActiveFeatures = true;
         }
 
         if (hasActiveFeatures) {
-            leftLines.add(insertAt, sodkamLine.toString().trim());
+            leftLines.add(insertAt, vuldiumLine.toString().trim());
             insertAt++;
         }
 

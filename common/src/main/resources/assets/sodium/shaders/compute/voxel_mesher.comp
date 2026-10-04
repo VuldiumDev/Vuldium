@@ -9,7 +9,7 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 // 18x18x18 включает внутреннюю секцию 16x16x16 + 1 воксель каймы для бесшовного сшивания
 shared uint s_VoxelGrid[18 * 18 * 18];
 
-// Формат вершины SodkamPackedVertex (16 байт)
+// Формат вершины VuldiumPackedVertex (16 байт)
 struct PackedVertex {
     uint posPayload;      // x: 4 bit, y: 4 bit, z: 4 bit, corner: 2 bit, face: 3 bit, ao: 2 bit, flags: 15 bit
     uint colorPayload;    // RGBA8_UNORM Packed Color с учетом AO
@@ -22,7 +22,7 @@ layout(std430, set = 0, binding = 0) readonly buffer RawChunkPalette {
     uint u_BlockStates[4096];
 };
 
-// SSBO 1: Выходной буфер геометрии в VRAM (Device-Local SodkamBufferArena)
+// SSBO 1: Выходной буфер геометрии в VRAM (Device-Local VuldiumBufferArena)
 layout(std430, set = 0, binding = 1) writeonly buffer OutputVertexBuffer {
     PackedVertex u_Vertices[];
 };
