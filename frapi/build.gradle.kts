@@ -6,7 +6,7 @@ plugins {
 }
 
 base {
-    archivesName = "sodium-frapi"
+    archivesName = "vuldium-frapi"
 }
 
 val configurationCommonModJava: Configuration = configurations.create("commonJava") {
