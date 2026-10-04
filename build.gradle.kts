@@ -47,7 +47,7 @@ gradle.projectsEvaluated {
 
         github {
             accessToken = project.providers.environmentVariable("GITHUB_TOKEN")
-            repository = "CaffeineMC/sodium"
+            repository = "VuldiumDev/Vuldium"
             commitish = BuildConfig.calculateGitHash(project)
             version = BuildConfig.RELEASE_TAG
             displayName = "Vuldium ${BuildConfig.MOD_VERSION} for Minecraft ${BuildConfig.MINECRAFT_VERSION}"
