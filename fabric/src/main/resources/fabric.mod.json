@@ -39,9 +39,9 @@
     "muzikbike"
   ],
   "contact" : {
-    "homepage" : "https://github.com/CaffeineMC/sodium",
-    "sources" : "https://github.com/CaffeineMC/sodium",
-    "issues" : "https://github.com/CaffeineMC/sodium/issues"
+    "homepage" : "https://github.com/VuldiumDev/Vuldium",
+    "sources" : "https://github.com/VuldiumDev/Vuldium",
+    "issues" : "https://github.com/VuldiumDev/Vuldium/issues"
   },
   "license" : "Polyform-Shield-1.0.0",
   "icon" : "sodium-icon.png",
